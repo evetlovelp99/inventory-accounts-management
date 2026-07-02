@@ -2,22 +2,33 @@ package com.beewax.service;
 
 import com.beewax.config.JwtAuthenticationFilter.JwtPrincipal;
 import com.beewax.dto.request.InboundCreateRequest;
+import com.beewax.dto.request.OutboundBatchLineRequest;
+import com.beewax.dto.request.OutboundCreateRequest;
 import com.beewax.dto.response.InboundBatchResponse;
 import com.beewax.dto.response.InboundCreateResponse;
+import com.beewax.dto.response.OutboundCreateResponse;
+import com.beewax.entity.Customer;
+import com.beewax.entity.Customer.CustomerStatus;
 import com.beewax.entity.InboundRecord;
 import com.beewax.entity.OperationLog;
+import com.beewax.entity.OutboundBatchLine;
+import com.beewax.entity.OutboundRecord;
 import com.beewax.entity.Product;
 import com.beewax.entity.Product.ProductStatus;
 import com.beewax.entity.Supplier;
 import com.beewax.entity.User;
 import com.beewax.exception.BusinessException;
+import com.beewax.repository.CustomerRepository;
 import com.beewax.repository.InboundRecordRepository;
 import com.beewax.repository.OperationLogRepository;
+import com.beewax.repository.OutboundBatchLineRepository;
+import com.beewax.repository.OutboundRecordRepository;
 import com.beewax.repository.ProductRepository;
 import com.beewax.repository.SupplierRepository;
 import com.beewax.repository.UserRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -25,34 +36,51 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class InventoryService {
 
 	private static final String ENTITY_TYPE_INBOUND = "inbound_records";
+	private static final String ENTITY_TYPE_OUTBOUND = "outbound_records";
 	private static final String ACTION_INBOUND_CREATE = "INBOUND_CREATE";
+	private static final String ACTION_OUTBOUND_CREATE = "OUTBOUND_CREATE";
+	private static final String CONCURRENT_CONFLICT_MESSAGE = "库存余量已变化，请刷新批次列表后重试";
 
 	private final InboundRecordRepository inboundRecordRepository;
+	private final OutboundRecordRepository outboundRecordRepository;
+	private final OutboundBatchLineRepository outboundBatchLineRepository;
 	private final OperationLogRepository operationLogRepository;
 	private final ProductRepository productRepository;
 	private final SupplierRepository supplierRepository;
+	private final CustomerRepository customerRepository;
 	private final UserRepository userRepository;
 	private final ObjectMapper objectMapper;
 
 	public InventoryService(
 			InboundRecordRepository inboundRecordRepository,
+			OutboundRecordRepository outboundRecordRepository,
+			OutboundBatchLineRepository outboundBatchLineRepository,
 			OperationLogRepository operationLogRepository,
 			ProductRepository productRepository,
 			SupplierRepository supplierRepository,
+			CustomerRepository customerRepository,
 			UserRepository userRepository,
 			ObjectMapper objectMapper) {
 		this.inboundRecordRepository = inboundRecordRepository;
+		this.outboundRecordRepository = outboundRecordRepository;
+		this.outboundBatchLineRepository = outboundBatchLineRepository;
 		this.operationLogRepository = operationLogRepository;
 		this.productRepository = productRepository;
 		this.supplierRepository = supplierRepository;
+		this.customerRepository = customerRepository;
 		this.userRepository = userRepository;
 		this.objectMapper = objectMapper;
 	}
@@ -108,6 +136,118 @@ public class InventoryService {
 				.toList();
 	}
 
+	@Transactional
+	public OutboundCreateResponse createOutbound(OutboundCreateRequest request) {
+		if (request.getBatchLines() == null || request.getBatchLines().isEmpty()) {
+			throw new BusinessException(400, "请至少添加一行批次明细");
+		}
+
+		Product product = productRepository.findById(request.getProductId())
+				.orElseThrow(() -> new BusinessException(400, "产品不存在"));
+		if (product.getStatus() == ProductStatus.INACTIVE) {
+			throw new BusinessException(400, "产品已停用");
+		}
+
+		Customer customer = customerRepository.findById(request.getCustomerId())
+				.orElseThrow(() -> new BusinessException(400, "客户不存在"));
+		if (customer.getStatus() == CustomerStatus.INACTIVE) {
+			throw new BusinessException(400, "客户已停用");
+		}
+
+		JwtPrincipal principal = getCurrentUser();
+		User operator = userRepository.findById(principal.userId())
+				.orElseThrow(() -> new BusinessException(401, "未登录或 token 过期"));
+
+		Set<Long> inboundIdSet = new HashSet<>();
+		for (OutboundBatchLineRequest line : request.getBatchLines()) {
+			if (!inboundIdSet.add(line.getInboundId())) {
+				throw new BusinessException(400, "批次明细存在重复的入库批次");
+			}
+		}
+
+		List<Long> inboundIds = inboundIdSet.stream().sorted().toList();
+		List<InboundRecord> lockedRecords;
+		try {
+			lockedRecords = inboundRecordRepository.findAllByIdInForUpdate(inboundIds);
+		} catch (PessimisticLockingFailureException ex) {
+			throw new BusinessException(409, CONCURRENT_CONFLICT_MESSAGE);
+		}
+
+		if (lockedRecords.size() != inboundIds.size()) {
+			throw new BusinessException(400, "入库批次不存在");
+		}
+
+		Map<Long, InboundRecord> recordById = lockedRecords.stream()
+				.collect(Collectors.toMap(InboundRecord::getId, Function.identity()));
+
+		BigDecimal saleUnitPrice = request.getSaleUnitPrice().setScale(2, RoundingMode.HALF_UP);
+		BigDecimal totalQty = BigDecimal.ZERO;
+		BigDecimal weightedCost = BigDecimal.ZERO;
+		List<OutboundBatchLine> batchLines = new ArrayList<>();
+
+		for (OutboundBatchLineRequest lineRequest : request.getBatchLines()) {
+			InboundRecord inbound = recordById.get(lineRequest.getInboundId());
+			if (!inbound.getProductId().equals(product.getId())) {
+				throw new BusinessException(400, "入库批次与产品不匹配");
+			}
+
+			BigDecimal qty = lineRequest.getQty().setScale(3, RoundingMode.HALF_UP);
+			if (qty.compareTo(inbound.getRemainingQty()) > 0) {
+				throw new BusinessException(400,
+						"批次 " + inbound.getId() + " 出库数量不能超过剩余余量 " + inbound.getRemainingQty());
+			}
+
+			inbound.setRemainingQty(inbound.getRemainingQty().subtract(qty));
+			BigDecimal lineCost = qty.multiply(inbound.getUnitPrice()).setScale(2, RoundingMode.HALF_UP);
+
+			OutboundBatchLine batchLine = new OutboundBatchLine();
+			batchLine.setInboundId(inbound.getId());
+			batchLine.setQty(qty);
+			batchLine.setUnitCost(inbound.getUnitPrice());
+			batchLine.setLineCost(lineCost);
+			batchLines.add(batchLine);
+
+			totalQty = totalQty.add(qty);
+			weightedCost = weightedCost.add(lineCost);
+		}
+
+		inboundRecordRepository.saveAll(lockedRecords);
+
+		BigDecimal totalSaleAmount = totalQty.multiply(saleUnitPrice).setScale(2, RoundingMode.HALF_UP);
+		BigDecimal grossProfit = totalSaleAmount.subtract(weightedCost).setScale(2, RoundingMode.HALF_UP);
+
+		OutboundRecord outbound = new OutboundRecord();
+		outbound.setProductId(product.getId());
+		outbound.setCustomerId(customer.getId());
+		outbound.setCustomerName(customer.getName());
+		outbound.setOutboundDate(request.getOutboundDate());
+		outbound.setTotalQty(totalQty);
+		outbound.setUnit(product.getUnit());
+		outbound.setSaleUnitPrice(saleUnitPrice);
+		outbound.setTotalSaleAmount(totalSaleAmount);
+		outbound.setWeightedCost(weightedCost);
+		outbound.setGrossProfit(grossProfit);
+		outbound.setRemark(trimToNull(request.getRemark()));
+		outbound.setCreatedBy(operator.getId());
+		outbound.setImported(false);
+
+		OutboundRecord savedOutbound = outboundRecordRepository.save(outbound);
+		for (OutboundBatchLine batchLine : batchLines) {
+			batchLine.setOutboundId(savedOutbound.getId());
+		}
+		outboundBatchLineRepository.saveAll(batchLines);
+
+		saveOutboundOperationLog(operator, savedOutbound, batchLines);
+
+		return new OutboundCreateResponse(
+				savedOutbound.getId(),
+				totalQty,
+				totalSaleAmount,
+				weightedCost,
+				grossProfit,
+				null);
+	}
+
 	private void saveOperationLog(User operator, InboundRecord record) {
 		OperationLog log = new OperationLog();
 		log.setOperatorId(operator.getId());
@@ -118,6 +258,43 @@ public class InventoryService {
 		log.setBeforeValue(null);
 		log.setAfterValue(toJson(buildInboundSnapshot(record)));
 		operationLogRepository.save(log);
+	}
+
+	private void saveOutboundOperationLog(User operator, OutboundRecord record, List<OutboundBatchLine> batchLines) {
+		OperationLog log = new OperationLog();
+		log.setOperatorId(operator.getId());
+		log.setOperatorName(operator.getName());
+		log.setAction(ACTION_OUTBOUND_CREATE);
+		log.setEntityType(ENTITY_TYPE_OUTBOUND);
+		log.setEntityId(record.getId());
+		log.setBeforeValue(null);
+		log.setAfterValue(toJson(buildOutboundSnapshot(record, batchLines)));
+		operationLogRepository.save(log);
+	}
+
+	private Map<String, Object> buildOutboundSnapshot(OutboundRecord record, List<OutboundBatchLine> batchLines) {
+		Map<String, Object> snapshot = new LinkedHashMap<>();
+		snapshot.put("id", record.getId());
+		snapshot.put("productId", record.getProductId());
+		snapshot.put("customerId", record.getCustomerId());
+		snapshot.put("customerName", record.getCustomerName());
+		snapshot.put("outboundDate", record.getOutboundDate().toString());
+		snapshot.put("totalQty", record.getTotalQty());
+		snapshot.put("unit", record.getUnit());
+		snapshot.put("saleUnitPrice", record.getSaleUnitPrice());
+		snapshot.put("totalSaleAmount", record.getTotalSaleAmount());
+		snapshot.put("weightedCost", record.getWeightedCost());
+		snapshot.put("grossProfit", record.getGrossProfit());
+		snapshot.put("remark", record.getRemark());
+		snapshot.put("batchLines", batchLines.stream().map(line -> {
+			Map<String, Object> lineSnapshot = new LinkedHashMap<>();
+			lineSnapshot.put("inboundId", line.getInboundId());
+			lineSnapshot.put("qty", line.getQty());
+			lineSnapshot.put("unitCost", line.getUnitCost());
+			lineSnapshot.put("lineCost", line.getLineCost());
+			return lineSnapshot;
+		}).toList());
+		return snapshot;
 	}
 
 	private Map<String, Object> buildInboundSnapshot(InboundRecord record) {

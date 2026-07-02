@@ -1,9 +1,11 @@
 package com.beewax.controller;
 
 import com.beewax.dto.request.InboundCreateRequest;
+import com.beewax.dto.request.OutboundCreateRequest;
 import com.beewax.dto.response.ApiResponse;
 import com.beewax.dto.response.InboundBatchResponse;
 import com.beewax.dto.response.InboundCreateResponse;
+import com.beewax.dto.response.OutboundCreateResponse;
 import com.beewax.service.InventoryService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,5 +35,10 @@ public class InventoryController {
 	@GetMapping("/inbound/{productId}/batches")
 	public ApiResponse<List<InboundBatchResponse>> listInboundBatches(@PathVariable Long productId) {
 		return ApiResponse.ok(inventoryService.listInboundBatches(productId));
+	}
+
+	@PostMapping("/outbound")
+	public ApiResponse<OutboundCreateResponse> createOutbound(@Valid @RequestBody OutboundCreateRequest request) {
+		return ApiResponse.ok(inventoryService.createOutbound(request));
 	}
 }
