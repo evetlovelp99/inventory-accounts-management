@@ -25,8 +25,8 @@ _目标：前后端本地可跑通，部署到阿里云可访问_
 - [x] 0.14 前端：创建 `api/client.ts`（axios 实例，请求拦截器注入 token，响应拦截器处理 401 跳转登录）
 - [x] 0.15 前端：创建 `authStore.ts`（Zustand，存 token + user）
 - [x] 0.16 前端：实现 `LoginPage`（账号密码表单，调用登录 API，成功后存 token 并跳转首页）
-- [ ] 0.17 前端：实现 `ProtectedRoute`（检查 token，未登录跳转登录页）
-- [ ] 0.18 前端：实现 `AppLayout`（TopBar + SideNav + Outlet，硬编码导航项，先不做权限过滤）
+- [x] 0.17 前端：实现 `ProtectedRoute`（检查 token，未登录跳转登录页）
+- [x] 0.18 前端：实现 `AppLayout`（TopBar + SideNav + Outlet，硬编码导航项，先不做权限过滤）
 - [ ] 0.19 部署：购买阿里云 2核4G 服务器，安装 Java 17, MySQL 8, Nginx
 - [ ] 0.20 部署：配置 Nginx 反向代理（前端静态文件 + `/api` 转发后端），验证可通过 IP 访问登录页
 
