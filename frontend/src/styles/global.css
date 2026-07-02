@@ -1,0 +1,116 @@
+:root {
+	/* Colors — design/theme.md */
+	--color-linen: #f5f3ef;
+	--color-paper: #fdfcfa;
+	--color-amber: #c8860a;
+	--color-amber-light: #fdf3dc;
+	--color-iron: #3d3d3d;
+	--color-ink: #1a1a1a;
+	--color-ash: #6b6b6b;
+	--color-dust: #e5e2dc;
+	--color-grove: #2d6a4f;
+	--color-grove-light: #d8eddf;
+	--color-brick: #b94040;
+	--color-brick-light: #faeaea;
+	--color-clay: #a05c1a;
+	--color-clay-light: #fff0dc;
+	--color-clay-dark: #8b3a10;
+
+	/* Typography — design/theme.md */
+	--font-sans: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+	--font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+	--font-size-display: 32px;
+	--line-height-display: 40px;
+	--font-size-title-1: 22px;
+	--line-height-title-1: 32px;
+	--font-size-title-2: 16px;
+	--line-height-title-2: 24px;
+	--font-size-body: 14px;
+	--line-height-body: 22px;
+	--font-size-caption: 12px;
+	--line-height-caption: 18px;
+	--font-size-label: 12px;
+	--line-height-label: 18px;
+
+	--font-weight-regular: 400;
+	--font-weight-medium: 500;
+	--font-weight-semibold: 600;
+
+	/* Spacing — 4px base unit */
+	--space-1: 4px;
+	--space-2: 8px;
+	--space-3: 12px;
+	--space-4: 16px;
+	--space-5: 24px;
+	--space-6: 32px;
+	--space-7: 48px;
+
+	/* Layout */
+	--sidenav-width: 220px;
+	--content-padding-x: 32px;
+	--content-padding-top: 32px;
+	--radius-base: 4px;
+	--radius-dialog: 6px;
+	--radius-tag: 2px;
+	--table-row-height: 48px;
+	--control-height: 40px;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	text-rendering: optimizeLegibility;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+	font-family: var(--font-sans);
+	font-size: var(--font-size-body);
+	line-height: var(--line-height-body);
+	font-weight: var(--font-weight-regular);
+	color: var(--color-ink);
+	background-color: var(--color-linen);
+}
+
+#root {
+	min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+	margin: 0;
+}
+
+a {
+	color: inherit;
+	text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+	font: inherit;
+}
+
+.tabular-nums {
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums lining-nums;
+}
+
+.font-mono {
+	font-family: var(--font-mono);
+}

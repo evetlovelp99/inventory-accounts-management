@@ -47,6 +47,8 @@ export const appTheme: ThemeConfig = {
 		fontSizeHeading2: 16,
 		lineHeight: 22 / 14,
 		controlHeight: 40,
+		fontFamily: '"PingFang SC", "Microsoft YaHei", sans-serif',
+		fontFamilyCode: '"IBM Plex Mono", ui-monospace, monospace',
 	},
 	components: {
 		Layout: {

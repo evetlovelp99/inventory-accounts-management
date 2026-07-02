@@ -21,7 +21,7 @@ _目标：前后端本地可跑通，部署到阿里云可访问_
 - [x] 0.10 前端：用 Vite 创建 React + TypeScript 项目
 - [x] 0.11 前端：安装依赖（Ant Design, Axios, Zustand, React Router v6）
 - [x] 0.12 前端：配置 `theme.ts`，将 theme.md 色彩系统映射为 Ant Design token（Amber 主色，4px 圆角等）
-- [ ] 0.13 前端：引入 IBM Plex Mono 字体，编写 `global.css`（CSS 变量、基础重置）
+- [x] 0.13 前端：引入 IBM Plex Mono 字体，编写 `global.css`（CSS 变量、基础重置）
 - [ ] 0.14 前端：创建 `api/client.ts`（axios 实例，请求拦截器注入 token，响应拦截器处理 401 跳转登录）
 - [ ] 0.15 前端：创建 `authStore.ts`（Zustand，存 token + user）
 - [ ] 0.16 前端：实现 `LoginPage`（账号密码表单，调用登录 API，成功后存 token 并跳转首页）
