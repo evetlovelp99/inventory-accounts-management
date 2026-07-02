@@ -1,0 +1,181 @@
+.toolbar {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+	margin-bottom: var(--space-4);
+}
+
+.primaryRow {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+	flex-wrap: wrap;
+}
+
+.secondaryRow {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+	flex-wrap: wrap;
+}
+
+.searchWrap {
+	position: relative;
+	width: 220px;
+	flex-shrink: 0;
+}
+
+.searchInput {
+	width: 100%;
+	height: 36px;
+	padding: 0 32px 0 34px;
+	border: 1px solid var(--color-dust);
+	border-radius: var(--radius-base);
+	background-color: var(--color-paper);
+	color: var(--color-ink);
+	font-size: var(--font-size-body);
+	line-height: 22px;
+	outline: none;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.searchInput:focus {
+	border-color: var(--color-amber);
+	box-shadow: 0 0 0 3px var(--color-amber-light);
+}
+
+.searchInput::placeholder {
+	color: var(--color-ash);
+}
+
+.searchIcon {
+	position: absolute;
+	left: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+	color: var(--color-ash);
+	font-size: 14px;
+	line-height: 1;
+	pointer-events: none;
+}
+
+.clearSearchButton {
+	position: absolute;
+	right: 8px;
+	top: 50%;
+	transform: translateY(-50%);
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: var(--color-ash);
+	font-size: 14px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.clearSearchButton:hover {
+	color: var(--color-ink);
+}
+
+.filterControl {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+.filterLabel {
+	font-size: var(--font-size-body);
+	line-height: var(--line-height-body);
+	color: var(--color-ink);
+	white-space: nowrap;
+}
+
+.select {
+	height: 36px;
+	min-width: 140px;
+	padding: 0 12px;
+	border: 1px solid var(--color-dust);
+	border-radius: var(--radius-base);
+	background-color: var(--color-paper);
+	color: var(--color-ink);
+	font-size: var(--font-size-body);
+	outline: none;
+}
+
+.select:focus {
+	border-color: var(--color-amber);
+	box-shadow: 0 0 0 3px var(--color-amber-light);
+}
+
+.dateInput {
+	height: 36px;
+	padding: 0 12px;
+	border: 1px solid var(--color-dust);
+	border-radius: var(--radius-base);
+	background-color: var(--color-paper);
+	color: var(--color-ink);
+	font-size: var(--font-size-body);
+	outline: none;
+}
+
+.dateInput:focus {
+	border-color: var(--color-amber);
+	box-shadow: 0 0 0 3px var(--color-amber-light);
+}
+
+.dateSeparator {
+	color: var(--color-ash);
+}
+
+.spacer {
+	flex: 1;
+	min-width: var(--space-2);
+}
+
+.tagRow {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	flex-wrap: wrap;
+	flex: 1;
+}
+
+.tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 3px 8px;
+	border: 1px solid var(--color-dust);
+	border-radius: var(--radius-tag);
+	background-color: var(--color-amber-light);
+	color: var(--color-amber);
+	font-size: var(--font-size-caption);
+	line-height: var(--line-height-caption);
+}
+
+.tagClose {
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	font-size: 12px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.clearAllButton {
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: var(--color-ash);
+	font-size: var(--font-size-body);
+	line-height: var(--line-height-body);
+	cursor: pointer;
+}
+
+.clearAllButton:hover {
+	color: var(--color-brick);
+}
