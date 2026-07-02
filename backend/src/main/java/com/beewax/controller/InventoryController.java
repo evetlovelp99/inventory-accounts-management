@@ -7,9 +7,11 @@ import com.beewax.dto.response.InboundBatchResponse;
 import com.beewax.dto.response.InboundCreateResponse;
 import com.beewax.dto.response.OutboundCreateResponse;
 import com.beewax.dto.response.PageResponse;
+import com.beewax.dto.response.ProductLedgerResponse;
 import com.beewax.dto.response.StockOverviewResponse;
 import com.beewax.service.InventoryService;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -41,6 +44,16 @@ public class InventoryController {
 			@RequestParam(defaultValue = "1") int page,
 			@RequestParam(defaultValue = "20") int size) {
 		return ApiResponse.ok(inventoryService.listStock(keyword, page, size));
+	}
+
+	@GetMapping("/stock/{productId}/ledger")
+	public ApiResponse<ProductLedgerResponse> getProductLedger(
+			@PathVariable Long productId,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+			@RequestParam(defaultValue = "1") int page,
+			@RequestParam(defaultValue = "20") int size) {
+		return ApiResponse.ok(inventoryService.getProductLedger(productId, startDate, endDate, page, size));
 	}
 
 	@GetMapping("/inbound/{productId}/batches")

@@ -51,7 +51,7 @@ _目标：仓管可完整录入入库、出库，老板可查库存和流水_
   - 后端事务：`SELECT ... FOR UPDATE` 锁定各批次行，逐行校验 qty <= remaining_qty，校验通过后扣减 remaining_qty，插入 outbound_records + outbound_batch_lines，记录 operation_log
   - 并发冲突时返回 409
 - [x] 1.7 后端：实现 `GET /api/inventory/stock`（聚合查询每个产品的 `SUM(remaining_qty)`）
-- [ ] 1.8 后端：实现 `GET /api/inventory/stock/{productId}/ledger`（联表查 inbound + outbound，按日期倒序分页）
+- [x] 1.8 后端：实现 `GET /api/inventory/stock/{productId}/ledger`（联表查 inbound + outbound，按日期倒序分页）
 
 ### 前端 — 通用组件（先把核心组件做好，后续页面直接复用）
 

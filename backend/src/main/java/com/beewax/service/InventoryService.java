@@ -6,8 +6,10 @@ import com.beewax.dto.request.OutboundBatchLineRequest;
 import com.beewax.dto.request.OutboundCreateRequest;
 import com.beewax.dto.response.InboundBatchResponse;
 import com.beewax.dto.response.InboundCreateResponse;
+import com.beewax.dto.response.LedgerEntryResponse;
 import com.beewax.dto.response.OutboundCreateResponse;
 import com.beewax.dto.response.PageResponse;
+import com.beewax.dto.response.ProductLedgerResponse;
 import com.beewax.dto.response.StockOverviewResponse;
 import com.beewax.entity.Customer;
 import com.beewax.entity.Customer.CustomerStatus;
@@ -22,10 +24,12 @@ import com.beewax.entity.User;
 import com.beewax.exception.BusinessException;
 import com.beewax.repository.CustomerRepository;
 import com.beewax.repository.InboundRecordRepository;
+import com.beewax.repository.InventoryLedgerRepository;
 import com.beewax.repository.OperationLogRepository;
 import com.beewax.repository.OutboundBatchLineRepository;
 import com.beewax.repository.OutboundRecordRepository;
 import com.beewax.repository.ProductRepository;
+import com.beewax.repository.ProductLedgerEntryProjection;
 import com.beewax.repository.StockOverviewProjection;
 import com.beewax.repository.SupplierRepository;
 import com.beewax.repository.UserRepository;
@@ -65,6 +69,7 @@ public class InventoryService {
 	private final OutboundBatchLineRepository outboundBatchLineRepository;
 	private final OperationLogRepository operationLogRepository;
 	private final ProductRepository productRepository;
+	private final InventoryLedgerRepository inventoryLedgerRepository;
 	private final SupplierRepository supplierRepository;
 	private final CustomerRepository customerRepository;
 	private final UserRepository userRepository;
@@ -76,6 +81,7 @@ public class InventoryService {
 			OutboundBatchLineRepository outboundBatchLineRepository,
 			OperationLogRepository operationLogRepository,
 			ProductRepository productRepository,
+			InventoryLedgerRepository inventoryLedgerRepository,
 			SupplierRepository supplierRepository,
 			CustomerRepository customerRepository,
 			UserRepository userRepository,
@@ -85,6 +91,7 @@ public class InventoryService {
 		this.outboundBatchLineRepository = outboundBatchLineRepository;
 		this.operationLogRepository = operationLogRepository;
 		this.productRepository = productRepository;
+		this.inventoryLedgerRepository = inventoryLedgerRepository;
 		this.supplierRepository = supplierRepository;
 		this.customerRepository = customerRepository;
 		this.userRepository = userRepository;
@@ -158,6 +165,29 @@ public class InventoryService {
 				.toList();
 
 		return new PageResponse<>(list, result.getTotalElements(), page, size);
+	}
+
+	public ProductLedgerResponse getProductLedger(
+			Long productId, LocalDate startDate, LocalDate endDate, int page, int size) {
+		Product product = productRepository.findById(productId)
+				.orElseThrow(() -> new BusinessException(404, "产品不存在"));
+
+		Page<ProductLedgerEntryProjection> result = inventoryLedgerRepository.findProductLedger(
+				productId, startDate, endDate, PageRequest.of(page - 1, size));
+
+		List<LedgerEntryResponse> list = result.getContent().stream()
+				.map(row -> new LedgerEntryResponse(
+						row.getId(),
+						row.getType(),
+						row.getRecordDate(),
+						row.getQty(),
+						row.getUnitPrice(),
+						row.getAmount(),
+						row.getPartyName(),
+						row.getRemark()))
+				.toList();
+
+		return new ProductLedgerResponse(product.getName(), product.getUnit(), list, result.getTotalElements());
 	}
 
 	@Transactional
