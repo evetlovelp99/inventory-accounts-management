@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import Toast from './components/Toast/Toast';
 import AppLayout from './layouts/AppLayout';
 import { NAV_ITEMS } from './layouts/navConfig';
 import LoginPage from './pages/Login/LoginPage';
@@ -22,6 +23,7 @@ function PlaceholderPage({ title }: { title: string }) {
 export default function App() {
 	return (
 		<BrowserRouter>
+			<Toast />
 			<Routes>
 				<Route path="/login" element={<LoginPage />} />
 				<Route element={<ProtectedRoute />}>
