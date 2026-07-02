@@ -1,0 +1,145 @@
+.wrapper {
+	border: 1px solid var(--color-dust);
+	border-radius: var(--radius-base);
+	background-color: var(--color-paper);
+	overflow: hidden;
+}
+
+.table :global(.ant-table) {
+	background: transparent;
+}
+
+.table :global(.ant-table-thead > tr > th) {
+	background-color: #f0ede8 !important;
+	color: var(--color-ink) !important;
+	font-size: var(--font-size-label);
+	font-weight: var(--font-weight-medium);
+	line-height: var(--line-height-label);
+	border-bottom: 1px solid var(--color-dust) !important;
+	padding: 12px 16px !important;
+}
+
+.table :global(.ant-table-thead > tr > th::before) {
+	display: none;
+}
+
+.table :global(.ant-table-tbody > tr > td) {
+	border-bottom: 1px solid var(--color-dust);
+	padding: 0 16px !important;
+	height: var(--table-row-height);
+	vertical-align: middle;
+}
+
+.table :global(.ant-table-tbody > tr.rowOdd > td) {
+	background-color: var(--color-paper);
+}
+
+.table :global(.ant-table-tbody > tr.rowEven > td) {
+	background-color: #f9f7f4;
+}
+
+.table :global(.ant-table-tbody > tr:hover > td) {
+	background-color: #f0ede8 !important;
+}
+
+.table :global(.ant-table-tbody > tr.warningRow > td) {
+	color: var(--color-brick);
+}
+
+.table :global(.ant-table-tbody > tr.warningRow:hover > td) {
+	color: var(--color-brick);
+}
+
+.numericCell {
+	text-align: right;
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums lining-nums;
+}
+
+.numericHeader {
+	text-align: right !important;
+}
+
+.actionCell {
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+.table :global(.ant-table-tbody > tr:hover) .actionCell {
+	opacity: 1;
+}
+
+.actionCell:focus-within {
+	opacity: 1;
+}
+
+.emptyState {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-3);
+	min-height: 240px;
+	padding: var(--space-6);
+	text-align: center;
+}
+
+.emptyIcon {
+	width: 48px;
+	height: 48px;
+	color: var(--color-ash);
+}
+
+.emptyText {
+	margin: 0;
+	font-size: var(--font-size-body);
+	line-height: var(--line-height-body);
+	color: var(--color-ash);
+}
+
+.skeletonBody {
+	padding: var(--space-2) 0;
+}
+
+.skeletonRow {
+	display: flex;
+	align-items: center;
+	height: var(--table-row-height);
+	padding: 0 16px;
+	border-bottom: 1px solid var(--color-dust);
+}
+
+.skeletonRow:nth-child(odd) {
+	background-color: var(--color-paper);
+}
+
+.skeletonRow:nth-child(even) {
+	background-color: #f9f7f4;
+}
+
+.skeletonBar {
+	height: 14px;
+	border-radius: var(--radius-tag);
+	background: linear-gradient(
+		90deg,
+		var(--color-dust) 25%,
+		#f0ede8 50%,
+		var(--color-dust) 75%
+	);
+	background-size: 200% 100%;
+	animation: shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+	0% {
+		background-position: 200% 0;
+	}
+
+	100% {
+		background-position: -200% 0;
+	}
+}
+
+.pagination :global(.ant-pagination) {
+	margin: var(--space-4) 16px !important;
+}
