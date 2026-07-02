@@ -7,6 +7,8 @@ import com.beewax.dto.request.OutboundCreateRequest;
 import com.beewax.dto.response.InboundBatchResponse;
 import com.beewax.dto.response.InboundCreateResponse;
 import com.beewax.dto.response.OutboundCreateResponse;
+import com.beewax.dto.response.PageResponse;
+import com.beewax.dto.response.StockOverviewResponse;
 import com.beewax.entity.Customer;
 import com.beewax.entity.Customer.CustomerStatus;
 import com.beewax.entity.InboundRecord;
@@ -24,11 +26,14 @@ import com.beewax.repository.OperationLogRepository;
 import com.beewax.repository.OutboundBatchLineRepository;
 import com.beewax.repository.OutboundRecordRepository;
 import com.beewax.repository.ProductRepository;
+import com.beewax.repository.StockOverviewProjection;
 import com.beewax.repository.SupplierRepository;
 import com.beewax.repository.UserRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.dao.PessimisticLockingFailureException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -36,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -134,6 +140,24 @@ public class InventoryService {
 				.stream()
 				.map(InboundBatchResponse::from)
 				.toList();
+	}
+
+	public PageResponse<StockOverviewResponse> listStock(String keyword, int page, int size) {
+		String searchKeyword = keyword != null && !keyword.isBlank() ? keyword.trim() : null;
+		Page<StockOverviewProjection> result = productRepository.findStockOverview(
+				searchKeyword, PageRequest.of(page - 1, size));
+
+		List<StockOverviewResponse> list = result.getContent().stream()
+				.map(row -> new StockOverviewResponse(
+						row.getProductId(),
+						row.getProductName(),
+						row.getSpec(),
+						row.getUnit(),
+						row.getTotalRemaining(),
+						toLocalDate(row.getLastUpdated())))
+				.toList();
+
+		return new PageResponse<>(list, result.getTotalElements(), page, size);
 	}
 
 	@Transactional
@@ -335,5 +359,9 @@ public class InventoryService {
 		}
 		String trimmed = value.trim();
 		return trimmed.isEmpty() ? null : trimmed;
+	}
+
+	private LocalDate toLocalDate(java.time.LocalDateTime dateTime) {
+		return dateTime != null ? dateTime.toLocalDate() : null;
 	}
 }

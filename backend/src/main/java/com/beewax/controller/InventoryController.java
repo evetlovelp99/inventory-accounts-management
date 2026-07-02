@@ -6,6 +6,8 @@ import com.beewax.dto.response.ApiResponse;
 import com.beewax.dto.response.InboundBatchResponse;
 import com.beewax.dto.response.InboundCreateResponse;
 import com.beewax.dto.response.OutboundCreateResponse;
+import com.beewax.dto.response.PageResponse;
+import com.beewax.dto.response.StockOverviewResponse;
 import com.beewax.service.InventoryService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -30,6 +33,14 @@ public class InventoryController {
 	@PostMapping("/inbound")
 	public ApiResponse<InboundCreateResponse> createInbound(@Valid @RequestBody InboundCreateRequest request) {
 		return ApiResponse.ok(inventoryService.createInbound(request));
+	}
+
+	@GetMapping("/stock")
+	public ApiResponse<PageResponse<StockOverviewResponse>> listStock(
+			@RequestParam(required = false) String keyword,
+			@RequestParam(defaultValue = "1") int page,
+			@RequestParam(defaultValue = "20") int size) {
+		return ApiResponse.ok(inventoryService.listStock(keyword, page, size));
 	}
 
 	@GetMapping("/inbound/{productId}/batches")
