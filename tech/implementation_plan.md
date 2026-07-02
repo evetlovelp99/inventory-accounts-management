@@ -55,7 +55,7 @@ _目标：仓管可完整录入入库、出库，老板可查库存和流水_
 
 ### 前端 — 通用组件（先把核心组件做好，后续页面直接复用）
 
-- [ ] 1.9 前端：实现 `StatusBadge` 组件（按 components.md 色彩表渲染所有状态）
+- [x] 1.9 前端：实现 `StatusBadge` 组件（按 components.md 色彩表渲染所有状态）
 - [ ] 1.10 前端：实现 `Button` 组件（5 种 variant，2 种 size，loading/disabled 状态）
 - [ ] 1.11 前端：实现 `DataTable` 组件（表头样式、行交替色、hover 效果、操作列 hover 显示、空状态、骨架屏）
 - [ ] 1.12 前端：实现 `Toast` + `useToast`（右上角叠放，滑入动画，成功 3s 消失）
