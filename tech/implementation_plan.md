@@ -18,7 +18,7 @@ _目标：前后端本地可跑通，部署到阿里云可访问_
 - [x] 0.7 后端：实现 `POST /api/auth/login`（bcrypt 密码校验，返回 token + 用户信息）
 - [x] 0.8 后端：实现全局异常处理器（`GlobalExceptionHandler`），统一返回 `{ code, message, data }` 结构
 - [x] 0.9 后端：配置 CORS（允许前端开发端口访问）
-- [ ] 0.10 前端：用 Vite 创建 React + TypeScript 项目
+- [x] 0.10 前端：用 Vite 创建 React + TypeScript 项目
 - [ ] 0.11 前端：安装依赖（Ant Design, Axios, Zustand, React Router v6）
 - [ ] 0.12 前端：配置 `theme.ts`，将 theme.md 色彩系统映射为 Ant Design token（Amber 主色，4px 圆角等）
 - [ ] 0.13 前端：引入 IBM Plex Mono 字体，编写 `global.css`（CSS 变量、基础重置）
