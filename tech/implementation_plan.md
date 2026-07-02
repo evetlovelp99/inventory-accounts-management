@@ -59,7 +59,7 @@ _目标：仓管可完整录入入库、出库，老板可查库存和流水_
 - [x] 1.10 前端：实现 `Button` 组件（5 种 variant，2 种 size，loading/disabled 状态）
 - [x] 1.11 前端：实现 `DataTable` 组件（表头样式、行交替色、hover 效果、操作列 hover 显示、空状态、骨架屏）
 - [x] 1.12 前端：实现 `Toast` + `useToast`（右上角叠放，滑入动画，成功 3s 消失）
-- [ ] 1.13 前端：实现 `AlertBar`（TopBar 下方，alertStore 驱动）
+- [x] 1.13 前端：实现 `AlertBar`（TopBar 下方，alertStore 驱动）
 - [ ] 1.14 前端：实现 `FilterToolbar`（搜索框 + FilterTag + 导出按钮）
 - [ ] 1.15 前端：实现 `EntryForm` 容器（640px 卡片，提交中禁用，按钮组）
 - [ ] 1.16 前端：实现 `BatchRow`（批次下拉 + 数量输入 + 行内信息展示 + 超量校验红框 + 删除按钮）
