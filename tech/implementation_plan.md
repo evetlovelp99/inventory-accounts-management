@@ -46,7 +46,7 @@ _目标：仓管可完整录入入库、出库，老板可查库存和流水_
 ### 后端 — 仓库核心接口
 
 - [x] 1.4 后端：实现 `POST /api/inventory/inbound`（含事务：插入 inbound_records，更新无需改 remaining_qty — 初始值等于 quantity；记录 operation_log）
-- [ ] 1.5 后端：实现 `GET /api/inventory/inbound/{productId}/batches`（返回有余量的批次列表）
+- [x] 1.5 后端：实现 `GET /api/inventory/inbound/{productId}/batches`（返回有余量的批次列表）
 - [ ] 1.6 后端：实现 `POST /api/inventory/outbound`
   - 后端事务：`SELECT ... FOR UPDATE` 锁定各批次行，逐行校验 qty <= remaining_qty，校验通过后扣减 remaining_qty，插入 outbound_records + outbound_batch_lines，记录 operation_log
   - 并发冲突时返回 409

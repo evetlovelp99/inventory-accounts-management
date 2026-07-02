@@ -2,6 +2,7 @@ package com.beewax.service;
 
 import com.beewax.config.JwtAuthenticationFilter.JwtPrincipal;
 import com.beewax.dto.request.InboundCreateRequest;
+import com.beewax.dto.response.InboundBatchResponse;
 import com.beewax.dto.response.InboundCreateResponse;
 import com.beewax.entity.InboundRecord;
 import com.beewax.entity.OperationLog;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -92,6 +94,18 @@ public class InventoryService {
 		saveOperationLog(operator, saved);
 
 		return new InboundCreateResponse(saved.getId(), totalAmount, null);
+	}
+
+	public List<InboundBatchResponse> listInboundBatches(Long productId) {
+		if (!productRepository.existsById(productId)) {
+			throw new BusinessException(404, "产品不存在");
+		}
+
+		return inboundRecordRepository
+				.findByProductIdAndRemainingQtyGreaterThanOrderByInboundDateAscIdAsc(productId, BigDecimal.ZERO)
+				.stream()
+				.map(InboundBatchResponse::from)
+				.toList();
 	}
 
 	private void saveOperationLog(User operator, InboundRecord record) {
