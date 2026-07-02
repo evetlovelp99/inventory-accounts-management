@@ -41,7 +41,7 @@ _目标：仓管可完整录入入库、出库，老板可查库存和流水_
 
 - [x] 1.1 后端：实现产品 CRUD 接口（`GET/POST/PUT /api/settings/products`，含停用）
 - [x] 1.2 后端：实现供应商 CRUD 接口（`/api/settings/suppliers`）
-- [ ] 1.3 后端：实现客户 CRUD 接口（`/api/settings/customers`）
+- [x] 1.3 后端：实现客户 CRUD 接口（`/api/settings/customers`）
 
 ### 后端 — 仓库核心接口
 
