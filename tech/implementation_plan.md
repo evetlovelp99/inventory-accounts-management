@@ -14,9 +14,9 @@ _目标：前后端本地可跑通，部署到阿里云可访问_
 - [x] 0.3 后端：编写 `V1__create_tables.sql`（按 database.md 创建所有表），接入 Flyway 自动执行
 - [x] 0.4 后端：编写 `V2__seed_roles.sql`，插入一条初始老板账号（用于首次登录）
 - [x] 0.5 后端：实现 JWT 工具类（生成、解析、过期校验）
-- [ ] 0.6 后端：配置 Spring Security（白名单 `/api/auth/login`，其余需 JWT）
-- [ ] 0.7 后端：实现 `POST /api/auth/login`（bcrypt 密码校验，返回 token + 用户信息）
-- [ ] 0.8 后端：实现全局异常处理器（`GlobalExceptionHandler`），统一返回 `{ code, message, data }` 结构
+- [x] 0.6 后端：配置 Spring Security（白名单 `/api/auth/login`，其余需 JWT）
+- [x] 0.7 后端：实现 `POST /api/auth/login`（bcrypt 密码校验，返回 token + 用户信息）
+- [x] 0.8 后端：实现全局异常处理器（`GlobalExceptionHandler`），统一返回 `{ code, message, data }` 结构
 - [ ] 0.9 后端：配置 CORS（允许前端开发端口访问）
 - [ ] 0.10 前端：用 Vite 创建 React + TypeScript 项目
 - [ ] 0.11 前端：安装依赖（Ant Design, Axios, Zustand, React Router v6）
