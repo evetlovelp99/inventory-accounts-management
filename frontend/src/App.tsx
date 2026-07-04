@@ -3,6 +3,7 @@ import Toast from './components/Toast/Toast';
 import AppLayout from './layouts/AppLayout';
 import { NAV_ITEMS } from './layouts/navConfig';
 import InboundEntryPage from './pages/Inventory/InboundEntryPage';
+import OutboundEntryPage from './pages/Inventory/OutboundEntryPage';
 import LoginPage from './pages/Login/LoginPage';
 import CustomersPage from './pages/Settings/CustomersPage';
 import ProductsPage from './pages/Settings/ProductsPage';
@@ -29,6 +30,7 @@ const IMPLEMENTED_PATHS = new Set([
 	'/settings/suppliers',
 	'/settings/customers',
 	'/inventory/inbound',
+	'/inventory/outbound',
 ]);
 
 export default function App() {
@@ -43,6 +45,7 @@ export default function App() {
 						<Route path="/settings/suppliers" element={<SuppliersPage />} />
 						<Route path="/settings/customers" element={<CustomersPage />} />
 						<Route path="/inventory/inbound" element={<InboundEntryPage />} />
+						<Route path="/inventory/outbound" element={<OutboundEntryPage />} />
 						{NAV_ITEMS.filter((item) => !IMPLEMENTED_PATHS.has(item.path)).map((item) => (
 							<Route
 								key={item.path}

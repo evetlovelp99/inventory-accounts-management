@@ -1,0 +1,79 @@
+.fieldRow {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--space-4);
+}
+
+.batchSection {
+	margin-bottom: var(--space-4);
+}
+
+.batchHeader {
+	margin: 0 0 var(--space-1);
+	font-size: var(--font-size-label);
+	line-height: var(--line-height-label);
+	font-weight: var(--font-weight-medium);
+	color: var(--color-ink);
+}
+
+.batchHint {
+	margin: 0 0 var(--space-3);
+	font-size: var(--font-size-caption);
+	line-height: var(--line-height-caption);
+	color: var(--color-ash);
+}
+
+.requiredMark {
+	color: var(--color-brick);
+}
+
+.batchList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+	margin-bottom: var(--space-3);
+}
+
+.summaryBlock {
+	margin-bottom: var(--space-4);
+	padding: var(--space-4);
+	border-radius: var(--radius-base);
+	background-color: #f0ede8;
+}
+
+.summaryRow {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: var(--space-4);
+	font-size: var(--font-size-body);
+	line-height: var(--line-height-body);
+	color: var(--color-ink);
+}
+
+.summaryRow + .summaryRow {
+	margin-top: var(--space-2);
+}
+
+.summaryLabel {
+	color: var(--color-ash);
+}
+
+.summaryValue {
+	font-weight: var(--font-weight-medium);
+}
+
+.profitPositive {
+	color: var(--color-grove);
+}
+
+.profitNegative {
+	color: var(--color-brick);
+}
+
+.emptyBatchHint {
+	margin: 0 0 var(--space-3);
+	font-size: var(--font-size-caption);
+	line-height: var(--line-height-caption);
+	color: var(--color-ash);
+}
