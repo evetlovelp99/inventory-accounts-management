@@ -72,7 +72,7 @@ _目标：仓管可完整录入入库、出库，老板可查库存和流水_
 
 ### 前端 — 仓库页面
 
-- [ ] 1.20 前端：实现 `InboundEntryPage`（产品/供应商下拉读接口，自动计算总金额，提交后 Toast 反馈）
+- [x] 1.20 前端：实现 `InboundEntryPage`（产品/供应商下拉读接口，自动计算总金额，提交后 Toast 反馈）
 - [ ] 1.21 前端：实现 `OutboundEntryPage`（先选产品 → 调批次接口 → BatchRow 列表；汇总计算区实时更新；提交含 createReceivable 选项）
 - [ ] 1.22 前端：实现 `StockOverviewPage`（DataTable + 搜索 + 余量为零行变红，行点击跳流水页）
 - [ ] 1.23 前端：实现 `ProductLedgerPage`（日期范围筛选 + 入库/出库流水合并列表）

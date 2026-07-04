@@ -1,0 +1,27 @@
+.fieldRow {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--space-4);
+}
+
+.totalBlock {
+	margin-bottom: var(--space-4);
+	padding: var(--space-4);
+	border-radius: var(--radius-base);
+	background-color: #f0ede8;
+}
+
+.totalLabel {
+	margin: 0 0 var(--space-2);
+	font-size: var(--font-size-caption);
+	line-height: var(--line-height-caption);
+	color: var(--color-ash);
+}
+
+.totalValue {
+	margin: 0;
+	font-size: var(--font-size-title-2);
+	line-height: var(--line-height-title-2);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-ink);
+}

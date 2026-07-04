@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Toast from './components/Toast/Toast';
 import AppLayout from './layouts/AppLayout';
 import { NAV_ITEMS } from './layouts/navConfig';
+import InboundEntryPage from './pages/Inventory/InboundEntryPage';
 import LoginPage from './pages/Login/LoginPage';
 import CustomersPage from './pages/Settings/CustomersPage';
 import ProductsPage from './pages/Settings/ProductsPage';
@@ -23,10 +24,11 @@ function PlaceholderPage({ title }: { title: string }) {
 	);
 }
 
-const IMPLEMENTED_SETTINGS_PATHS = new Set([
+const IMPLEMENTED_PATHS = new Set([
 	'/settings/products',
 	'/settings/suppliers',
 	'/settings/customers',
+	'/inventory/inbound',
 ]);
 
 export default function App() {
@@ -40,7 +42,8 @@ export default function App() {
 						<Route path="/settings/products" element={<ProductsPage />} />
 						<Route path="/settings/suppliers" element={<SuppliersPage />} />
 						<Route path="/settings/customers" element={<CustomersPage />} />
-						{NAV_ITEMS.filter((item) => !IMPLEMENTED_SETTINGS_PATHS.has(item.path)).map((item) => (
+						<Route path="/inventory/inbound" element={<InboundEntryPage />} />
+						{NAV_ITEMS.filter((item) => !IMPLEMENTED_PATHS.has(item.path)).map((item) => (
 							<Route
 								key={item.path}
 								path={item.path}
