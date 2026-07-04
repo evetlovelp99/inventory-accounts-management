@@ -213,3 +213,106 @@ export async function updateSupplierStatus(
 
 	return response.data.data;
 }
+
+export type CustomerStatus = 'ACTIVE' | 'INACTIVE';
+
+export interface Customer {
+	id: number;
+	name: string;
+	country: string | null;
+	contactName: string | null;
+	contactInfo: string | null;
+	remark: string | null;
+	status: CustomerStatus;
+}
+
+export interface CustomerCreatePayload {
+	name: string;
+	country?: string;
+	contactName?: string;
+	contactInfo?: string;
+	remark?: string;
+}
+
+export interface CustomerUpdatePayload {
+	name: string;
+	country?: string;
+	contactName?: string;
+	contactInfo?: string;
+	remark?: string;
+}
+
+export interface ListCustomersParams {
+	keyword?: string;
+	status?: CustomerStatus;
+	page?: number;
+	size?: number;
+}
+
+const CUSTOMER_DEACTIVATE_WARNING_MESSAGE =
+	'该客户存在未收款记录，停用后仍可在账款模块查看，是否继续？';
+
+export function isCustomerDeactivateWarningError(error: unknown): boolean {
+	return getSettingsErrorMessage(error) === CUSTOMER_DEACTIVATE_WARNING_MESSAGE;
+}
+
+export async function listCustomers(
+	params: ListCustomersParams = {},
+): Promise<PageResult<Customer>> {
+	const response = await apiClient.get<ApiResponse<PageResult<Customer>>>(
+		'/settings/customers',
+		{ params },
+	);
+
+	if (response.data.code !== 200) {
+		throw new Error(response.data.message);
+	}
+
+	return response.data.data;
+}
+
+export async function createCustomer(payload: CustomerCreatePayload): Promise<Customer> {
+	const response = await apiClient.post<ApiResponse<Customer>>(
+		'/settings/customers',
+		payload,
+	);
+
+	if (response.data.code !== 200) {
+		throw new Error(response.data.message);
+	}
+
+	return response.data.data;
+}
+
+export async function updateCustomer(
+	id: number,
+	payload: CustomerUpdatePayload,
+): Promise<Customer> {
+	const response = await apiClient.put<ApiResponse<Customer>>(
+		`/settings/customers/${id}`,
+		payload,
+	);
+
+	if (response.data.code !== 200) {
+		throw new Error(response.data.message);
+	}
+
+	return response.data.data;
+}
+
+export async function updateCustomerStatus(
+	id: number,
+	status: CustomerStatus,
+	force = false,
+): Promise<Customer> {
+	const response = await apiClient.put<ApiResponse<Customer>>(
+		`/settings/customers/${id}/status`,
+		{ status, force: force || undefined },
+	);
+
+	if (response.data.code !== 200) {
+		throw new Error(response.data.message);
+	}
+
+	return response.data.data;
+}

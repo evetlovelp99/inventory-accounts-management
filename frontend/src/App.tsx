@@ -3,6 +3,7 @@ import Toast from './components/Toast/Toast';
 import AppLayout from './layouts/AppLayout';
 import { NAV_ITEMS } from './layouts/navConfig';
 import LoginPage from './pages/Login/LoginPage';
+import CustomersPage from './pages/Settings/CustomersPage';
 import ProductsPage from './pages/Settings/ProductsPage';
 import SuppliersPage from './pages/Settings/SuppliersPage';
 import ProtectedRoute from './routes/ProtectedRoute';
@@ -22,6 +23,12 @@ function PlaceholderPage({ title }: { title: string }) {
 	);
 }
 
+const IMPLEMENTED_SETTINGS_PATHS = new Set([
+	'/settings/products',
+	'/settings/suppliers',
+	'/settings/customers',
+]);
+
 export default function App() {
 	return (
 		<BrowserRouter>
@@ -32,11 +39,8 @@ export default function App() {
 					<Route element={<AppLayout />}>
 						<Route path="/settings/products" element={<ProductsPage />} />
 						<Route path="/settings/suppliers" element={<SuppliersPage />} />
-						{NAV_ITEMS.filter(
-							(item) =>
-								item.path !== '/settings/products' &&
-								item.path !== '/settings/suppliers',
-						).map((item) => (
+						<Route path="/settings/customers" element={<CustomersPage />} />
+						{NAV_ITEMS.filter((item) => !IMPLEMENTED_SETTINGS_PATHS.has(item.path)).map((item) => (
 							<Route
 								key={item.path}
 								path={item.path}

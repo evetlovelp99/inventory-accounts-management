@@ -68,7 +68,7 @@ _目标：仓管可完整录入入库、出库，老板可查库存和流水_
 
 - [x] 1.17 前端：实现 `ProductsPage`（列表 + 新增/编辑 Modal + 停用确认）
 - [x] 1.18 前端：实现 `SuppliersPage`
-- [ ] 1.19 前端：实现 `CustomersPage`
+- [x] 1.19 前端：实现 `CustomersPage`
 
 ### 前端 — 仓库页面
 
