@@ -113,3 +113,103 @@ export async function updateProductStatus(
 
 	return response.data.data;
 }
+
+export type SupplierStatus = 'ACTIVE' | 'INACTIVE';
+
+export interface Supplier {
+	id: number;
+	name: string;
+	contactName: string | null;
+	contactInfo: string | null;
+	remark: string | null;
+	status: SupplierStatus;
+}
+
+export interface SupplierCreatePayload {
+	name: string;
+	contactName?: string;
+	contactInfo?: string;
+	remark?: string;
+}
+
+export interface SupplierUpdatePayload {
+	name: string;
+	contactName?: string;
+	contactInfo?: string;
+	remark?: string;
+}
+
+export interface ListSuppliersParams {
+	keyword?: string;
+	status?: SupplierStatus;
+	page?: number;
+	size?: number;
+}
+
+const SUPPLIER_DEACTIVATE_WARNING_MESSAGE =
+	'该供应商存在未付款记录，停用后仍可在账款模块查看，是否继续？';
+
+export function isSupplierDeactivateWarningError(error: unknown): boolean {
+	return getSettingsErrorMessage(error) === SUPPLIER_DEACTIVATE_WARNING_MESSAGE;
+}
+
+export async function listSuppliers(
+	params: ListSuppliersParams = {},
+): Promise<PageResult<Supplier>> {
+	const response = await apiClient.get<ApiResponse<PageResult<Supplier>>>(
+		'/settings/suppliers',
+		{ params },
+	);
+
+	if (response.data.code !== 200) {
+		throw new Error(response.data.message);
+	}
+
+	return response.data.data;
+}
+
+export async function createSupplier(payload: SupplierCreatePayload): Promise<Supplier> {
+	const response = await apiClient.post<ApiResponse<Supplier>>(
+		'/settings/suppliers',
+		payload,
+	);
+
+	if (response.data.code !== 200) {
+		throw new Error(response.data.message);
+	}
+
+	return response.data.data;
+}
+
+export async function updateSupplier(
+	id: number,
+	payload: SupplierUpdatePayload,
+): Promise<Supplier> {
+	const response = await apiClient.put<ApiResponse<Supplier>>(
+		`/settings/suppliers/${id}`,
+		payload,
+	);
+
+	if (response.data.code !== 200) {
+		throw new Error(response.data.message);
+	}
+
+	return response.data.data;
+}
+
+export async function updateSupplierStatus(
+	id: number,
+	status: SupplierStatus,
+	force = false,
+): Promise<Supplier> {
+	const response = await apiClient.put<ApiResponse<Supplier>>(
+		`/settings/suppliers/${id}/status`,
+		{ status, force: force || undefined },
+	);
+
+	if (response.data.code !== 200) {
+		throw new Error(response.data.message);
+	}
+
+	return response.data.data;
+}

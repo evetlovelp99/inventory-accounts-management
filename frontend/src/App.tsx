@@ -4,6 +4,7 @@ import AppLayout from './layouts/AppLayout';
 import { NAV_ITEMS } from './layouts/navConfig';
 import LoginPage from './pages/Login/LoginPage';
 import ProductsPage from './pages/Settings/ProductsPage';
+import SuppliersPage from './pages/Settings/SuppliersPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 
 function PlaceholderPage({ title }: { title: string }) {
@@ -30,7 +31,12 @@ export default function App() {
 				<Route element={<ProtectedRoute />}>
 					<Route element={<AppLayout />}>
 						<Route path="/settings/products" element={<ProductsPage />} />
-						{NAV_ITEMS.filter((item) => item.path !== '/settings/products').map((item) => (
+						<Route path="/settings/suppliers" element={<SuppliersPage />} />
+						{NAV_ITEMS.filter(
+							(item) =>
+								item.path !== '/settings/products' &&
+								item.path !== '/settings/suppliers',
+						).map((item) => (
 							<Route
 								key={item.path}
 								path={item.path}
