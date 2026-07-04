@@ -200,11 +200,15 @@ export default function ProductLedgerPage() {
 	return (
 		<div>
 			<div className={styles.header}>
-				<Button variant="ghost" onClick={() => navigate('/inventory/stock')}>
-					返回
-				</Button>
-				<h2 className={styles.productName}>{productName || '产品流水'}</h2>
-				{unit ? <p className={styles.productMeta}>计量单位：{unit}</p> : null}
+				<div className={styles.headerRow}>
+					<div className={styles.headerMain}>
+						<h2 className={styles.productName}>{productName || '产品流水'}</h2>
+						{unit ? <p className={styles.productMeta}>计量单位：{unit}</p> : null}
+					</div>
+					<Button variant="secondary" onClick={() => navigate('/inventory/stock')}>
+						返回
+					</Button>
+				</div>
 			</div>
 
 			<div className={styles.toolbarWrap}>
