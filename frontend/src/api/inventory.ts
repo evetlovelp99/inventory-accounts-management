@@ -118,3 +118,46 @@ export async function createOutbound(payload: OutboundCreatePayload): Promise<Ou
 
 	return response.data.data;
 }
+
+export type LedgerEntryType = 'INBOUND' | 'OUTBOUND';
+
+export interface LedgerEntry {
+	id: number;
+	type: LedgerEntryType;
+	date: string;
+	qty: number;
+	unitPrice: number;
+	amount: number;
+	partyName: string;
+	remark: string | null;
+}
+
+export interface ProductLedgerResult {
+	productName: string;
+	unit: string;
+	list: LedgerEntry[];
+	total: number;
+}
+
+export interface ProductLedgerParams {
+	startDate?: string;
+	endDate?: string;
+	page?: number;
+	size?: number;
+}
+
+export async function getProductLedger(
+	productId: number,
+	params: ProductLedgerParams = {},
+): Promise<ProductLedgerResult> {
+	const response = await apiClient.get<ApiResponse<ProductLedgerResult>>(
+		`/inventory/stock/${productId}/ledger`,
+		{ params },
+	);
+
+	if (response.data.code !== 200) {
+		throw new Error(response.data.message);
+	}
+
+	return response.data.data;
+}

@@ -1,0 +1,26 @@
+.header {
+	margin-bottom: var(--space-4);
+}
+
+.productName {
+	margin: 0;
+	font-size: var(--font-size-title-1);
+	line-height: var(--line-height-title-1);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-ink);
+}
+
+.productMeta {
+	margin: var(--space-1) 0 0;
+	font-size: var(--font-size-caption);
+	line-height: var(--line-height-caption);
+	color: var(--color-ash);
+}
+
+.toolbarWrap {
+	margin-bottom: var(--space-4);
+}
+
+.toolbarWrap > :global(*) {
+	margin-bottom: 0;
+}

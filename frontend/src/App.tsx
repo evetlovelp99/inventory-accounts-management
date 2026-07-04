@@ -4,6 +4,8 @@ import AppLayout from './layouts/AppLayout';
 import { NAV_ITEMS } from './layouts/navConfig';
 import InboundEntryPage from './pages/Inventory/InboundEntryPage';
 import OutboundEntryPage from './pages/Inventory/OutboundEntryPage';
+import ProductLedgerPage from './pages/Inventory/ProductLedgerPage';
+import StockOverviewPage from './pages/Inventory/StockOverviewPage';
 import LoginPage from './pages/Login/LoginPage';
 import CustomersPage from './pages/Settings/CustomersPage';
 import ProductsPage from './pages/Settings/ProductsPage';
@@ -31,6 +33,7 @@ const IMPLEMENTED_PATHS = new Set([
 	'/settings/customers',
 	'/inventory/inbound',
 	'/inventory/outbound',
+	'/inventory/stock',
 ]);
 
 export default function App() {
@@ -46,6 +49,11 @@ export default function App() {
 						<Route path="/settings/customers" element={<CustomersPage />} />
 						<Route path="/inventory/inbound" element={<InboundEntryPage />} />
 						<Route path="/inventory/outbound" element={<OutboundEntryPage />} />
+						<Route path="/inventory/stock" element={<StockOverviewPage />} />
+						<Route
+							path="/inventory/stock/:productId"
+							element={<ProductLedgerPage />}
+						/>
 						{NAV_ITEMS.filter((item) => !IMPLEMENTED_PATHS.has(item.path)).map((item) => (
 							<Route
 								key={item.path}
