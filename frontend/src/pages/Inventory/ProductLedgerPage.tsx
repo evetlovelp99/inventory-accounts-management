@@ -1,12 +1,13 @@
 import type { ColumnsType } from 'antd/es/table';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
 	getInventoryErrorMessage,
 	getProductLedger,
 	type LedgerEntry,
 	type LedgerEntryType,
 } from '../../api/inventory';
+import Button from '../../components/Button/Button';
 import DataTable from '../../components/DataTable/DataTable';
 import FilterToolbar from '../../components/FilterToolbar/FilterToolbar';
 import type { ActiveFilter, DateRangeValue } from '../../components/FilterToolbar/filterTypes';
@@ -66,6 +67,7 @@ interface LedgerTableRow extends LedgerEntry {
 }
 
 export default function ProductLedgerPage() {
+	const navigate = useNavigate();
 	const { productId: productIdParam } = useParams();
 	const productId = Number(productIdParam);
 	const showAlert = useAlertStore((state) => state.showAlert);
@@ -198,6 +200,9 @@ export default function ProductLedgerPage() {
 	return (
 		<div>
 			<div className={styles.header}>
+				<Button variant="ghost" onClick={() => navigate('/inventory/stock')}>
+					返回
+				</Button>
 				<h2 className={styles.productName}>{productName || '产品流水'}</h2>
 				{unit ? <p className={styles.productMeta}>计量单位：{unit}</p> : null}
 			</div>
