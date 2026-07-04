@@ -3,6 +3,7 @@ import Toast from './components/Toast/Toast';
 import AppLayout from './layouts/AppLayout';
 import { NAV_ITEMS } from './layouts/navConfig';
 import LoginPage from './pages/Login/LoginPage';
+import ProductsPage from './pages/Settings/ProductsPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 
 function PlaceholderPage({ title }: { title: string }) {
@@ -28,7 +29,8 @@ export default function App() {
 				<Route path="/login" element={<LoginPage />} />
 				<Route element={<ProtectedRoute />}>
 					<Route element={<AppLayout />}>
-						{NAV_ITEMS.map((item) => (
+						<Route path="/settings/products" element={<ProductsPage />} />
+						{NAV_ITEMS.filter((item) => item.path !== '/settings/products').map((item) => (
 							<Route
 								key={item.path}
 								path={item.path}

@@ -1,0 +1,29 @@
+.toolbarRow {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--space-3);
+	margin-bottom: var(--space-4);
+}
+
+.toolbarMain {
+	flex: 1;
+	min-width: 0;
+}
+
+.toolbarMain > :global(*) {
+	margin-bottom: 0;
+}
+
+.actions {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+}
+
+.statusActive {
+	color: var(--color-ink);
+}
+
+.statusInactive {
+	color: var(--color-ash);
+}
