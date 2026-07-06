@@ -41,6 +41,14 @@
 	margin-bottom: 0;
 }
 
+.amountValue {
+	white-space: nowrap;
+}
+
+.qtyValue {
+	white-space: nowrap;
+}
+
 .productionDetail {
 	padding: var(--space-2) var(--space-4);
 }

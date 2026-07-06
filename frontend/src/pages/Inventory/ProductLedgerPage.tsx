@@ -257,7 +257,9 @@ export default function ProductLedgerPage() {
 			key: 'qty',
 			width: 120,
 			align: 'right',
-			render: (qty: number) => formatQty(qty, unit),
+			render: (qty: number) => (
+				<span className={styles.qtyValue}>{formatQty(qty, unit)}</span>
+			),
 		},
 		{
 			title: '单价',
@@ -273,7 +275,9 @@ export default function ProductLedgerPage() {
 			key: 'amount',
 			width: 120,
 			align: 'right',
-			render: (amount: number) => `¥ ${formatMoney(amount)}`,
+			render: (amount: number) => (
+				<span className={styles.amountValue}>¥ {formatMoney(amount)}</span>
+			),
 		},
 		{
 			title: '对手方',
