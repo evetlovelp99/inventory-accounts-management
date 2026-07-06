@@ -1,8 +1,16 @@
 package com.beewax.service;
 
 import com.beewax.config.JwtAuthenticationFilter.JwtPrincipal;
+import com.beewax.dto.request.PayableCreateRequest;
+import com.beewax.dto.request.PayablePaymentRequest;
 import com.beewax.dto.request.ReceivableCreateRequest;
 import com.beewax.dto.request.ReceivablePaymentRequest;
+import com.beewax.dto.response.PayableCreateResponse;
+import com.beewax.dto.response.PayableDetailResponse;
+import com.beewax.dto.response.PayableListResponse;
+import com.beewax.dto.response.PayablePaymentResponse;
+import com.beewax.dto.response.PayableRecordResponse;
+import com.beewax.dto.response.PayableSummaryItemResponse;
 import com.beewax.dto.response.PaymentLogResponse;
 import com.beewax.dto.response.ReceivableCreateResponse;
 import com.beewax.dto.response.ReceivableDetailResponse;
@@ -10,6 +18,8 @@ import com.beewax.dto.response.ReceivableListResponse;
 import com.beewax.dto.response.ReceivablePaymentResponse;
 import com.beewax.dto.response.ReceivableRecordResponse;
 import com.beewax.dto.response.ReceivableSummaryItemResponse;
+import com.beewax.entity.AccountPayable;
+import com.beewax.entity.AccountPayable.PayableStatus;
 import com.beewax.entity.AccountReceivable;
 import com.beewax.entity.AccountReceivable.ReceivableStatus;
 import com.beewax.entity.Customer;
@@ -17,14 +27,20 @@ import com.beewax.entity.Customer.CustomerStatus;
 import com.beewax.entity.OperationLog;
 import com.beewax.entity.PaymentLog;
 import com.beewax.entity.PaymentLog.AccountType;
+import com.beewax.entity.Supplier;
+import com.beewax.entity.Supplier.SupplierStatus;
 import com.beewax.entity.User;
 import com.beewax.exception.BusinessException;
+import com.beewax.repository.AccountPayableRepository;
 import com.beewax.repository.AccountReceivableRepository;
 import com.beewax.repository.CustomerRepository;
+import com.beewax.repository.InboundRecordRepository;
 import com.beewax.repository.OperationLogRepository;
 import com.beewax.repository.OutboundRecordRepository;
+import com.beewax.repository.PayableSummaryProjection;
 import com.beewax.repository.PaymentLogRepository;
 import com.beewax.repository.ReceivableSummaryProjection;
+import com.beewax.repository.SupplierRepository;
 import com.beewax.repository.UserRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,29 +63,40 @@ import java.util.Map;
 public class AccountService {
 
 	private static final String ENTITY_TYPE_RECEIVABLE = "account_receivables";
+	private static final String ENTITY_TYPE_PAYABLE = "account_payables";
 	private static final String ACTION_PAYMENT_LOG = "PAYMENT_LOG";
 	private static final String ACTION_RECEIVABLE_CREATE = "RECEIVABLE_CREATE";
+	private static final String ACTION_PAYABLE_CREATE = "PAYABLE_CREATE";
 
 	private final AccountReceivableRepository accountReceivableRepository;
+	private final AccountPayableRepository accountPayableRepository;
 	private final PaymentLogRepository paymentLogRepository;
 	private final CustomerRepository customerRepository;
+	private final SupplierRepository supplierRepository;
 	private final OutboundRecordRepository outboundRecordRepository;
+	private final InboundRecordRepository inboundRecordRepository;
 	private final OperationLogRepository operationLogRepository;
 	private final UserRepository userRepository;
 	private final ObjectMapper objectMapper;
 
 	public AccountService(
 			AccountReceivableRepository accountReceivableRepository,
+			AccountPayableRepository accountPayableRepository,
 			PaymentLogRepository paymentLogRepository,
 			CustomerRepository customerRepository,
+			SupplierRepository supplierRepository,
 			OutboundRecordRepository outboundRecordRepository,
+			InboundRecordRepository inboundRecordRepository,
 			OperationLogRepository operationLogRepository,
 			UserRepository userRepository,
 			ObjectMapper objectMapper) {
 		this.accountReceivableRepository = accountReceivableRepository;
+		this.accountPayableRepository = accountPayableRepository;
 		this.paymentLogRepository = paymentLogRepository;
 		this.customerRepository = customerRepository;
+		this.supplierRepository = supplierRepository;
 		this.outboundRecordRepository = outboundRecordRepository;
+		this.inboundRecordRepository = inboundRecordRepository;
 		this.operationLogRepository = operationLogRepository;
 		this.userRepository = userRepository;
 		this.objectMapper = objectMapper;
@@ -192,6 +219,125 @@ public class AccountService {
 		return new ReceivablePaymentResponse(newRemainingAmount, newStatus.name());
 	}
 
+	public PayableListResponse listPayables(String keyword, PayableStatus status, int page, int size) {
+		String searchKeyword = keyword != null && !keyword.isBlank() ? keyword.trim() : null;
+		String statusFilter = status != null ? status.name() : null;
+
+		BigDecimal totalUnpaidAmount = accountPayableRepository.sumRemainingAmount(searchKeyword, statusFilter);
+		Page<PayableSummaryProjection> result = accountPayableRepository.findPayableSummary(
+				searchKeyword, statusFilter, PageRequest.of(page - 1, size));
+
+		List<PayableSummaryItemResponse> list = result.getContent().stream()
+				.map(this::toPayableSummaryItem)
+				.toList();
+
+		return new PayableListResponse(totalUnpaidAmount, list, result.getTotalElements());
+	}
+
+	public PayableDetailResponse getPayableDetail(Long supplierId, LocalDate startDate, LocalDate endDate) {
+		String supplierName = supplierRepository.findById(supplierId)
+				.orElseThrow(() -> new BusinessException(404, "供应商不存在"))
+				.getName();
+
+		List<AccountPayable> records = accountPayableRepository.findBySupplierIdWithDateFilter(
+				supplierId, startDate, endDate);
+		Map<Long, List<PaymentLogResponse>> paymentLogsByAccountId = loadPaymentLogs(
+				records.stream().map(AccountPayable::getId).toList(), AccountType.PAYABLE);
+
+		List<PayableRecordResponse> recordResponses = records.stream()
+				.map(record -> toPayableRecordResponse(
+						record, paymentLogsByAccountId.getOrDefault(record.getId(), List.of())))
+				.toList();
+
+		return new PayableDetailResponse(supplierName, recordResponses);
+	}
+
+	@Transactional
+	public PayableCreateResponse createPayable(PayableCreateRequest request) {
+		Supplier supplier = supplierRepository.findById(request.getSupplierId())
+				.orElseThrow(() -> new BusinessException(400, "供应商不存在"));
+		if (supplier.getStatus() == SupplierStatus.INACTIVE) {
+			throw new BusinessException(400, "供应商已停用");
+		}
+
+		if (request.getInboundId() != null
+				&& !inboundRecordRepository.existsById(request.getInboundId())) {
+			throw new BusinessException(400, "入库单不存在");
+		}
+
+		User operator = userRepository.findById(getCurrentUser().userId())
+				.orElseThrow(() -> new BusinessException(401, "未登录或 token 过期"));
+
+		BigDecimal originalAmount = request.getOriginalAmount();
+		AccountPayable record = new AccountPayable();
+		record.setSupplierId(supplier.getId());
+		record.setSupplierName(supplier.getName());
+		record.setInboundId(request.getInboundId());
+		record.setOriginalAmount(originalAmount);
+		record.setPaidAmount(BigDecimal.ZERO);
+		record.setRemainingAmount(originalAmount);
+		record.setOccurDate(request.getOccurDate());
+		record.setStatus(PayableStatus.UNPAID);
+		record.setRemark(trimToNull(request.getRemark()));
+		record.setCreatedBy(operator.getId());
+		record.setImported(false);
+
+		AccountPayable saved = accountPayableRepository.save(record);
+		savePayableCreateOperationLog(operator, saved);
+
+		return new PayableCreateResponse(saved.getId());
+	}
+
+	@Transactional
+	public PayablePaymentResponse registerPayablePayment(Long id, PayablePaymentRequest request) {
+		AccountPayable record = accountPayableRepository.findById(id)
+				.orElseThrow(() -> new BusinessException(404, "应付账款记录不存在"));
+
+		BigDecimal amount = request.getAmount();
+		if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new BusinessException(400, "付款金额必须大于0");
+		}
+
+		BigDecimal remainingAmount = record.getRemainingAmount();
+		if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new BusinessException(400, "该应付账款已结清");
+		}
+
+		if (amount.compareTo(remainingAmount) > 0) {
+			String formattedRemaining = remainingAmount.setScale(2, RoundingMode.HALF_UP).toPlainString();
+			throw new BusinessException(400, "付款金额不能超过剩余欠款 " + formattedRemaining + " 元");
+		}
+
+		User operator = userRepository.findById(getCurrentUser().userId())
+				.orElseThrow(() -> new BusinessException(401, "未登录或 token 过期"));
+
+		Map<String, Object> beforeSnapshot = buildPayableSnapshot(record);
+
+		BigDecimal newPaidAmount = record.getPaidAmount().add(amount);
+		BigDecimal newRemainingAmount = remainingAmount.subtract(amount);
+		PayableStatus newStatus = newRemainingAmount.compareTo(BigDecimal.ZERO) == 0
+				? PayableStatus.PAID
+				: PayableStatus.PARTIAL;
+
+		record.setPaidAmount(newPaidAmount);
+		record.setRemainingAmount(newRemainingAmount);
+		record.setStatus(newStatus);
+		accountPayableRepository.save(record);
+
+		PaymentLog paymentLog = new PaymentLog();
+		paymentLog.setAccountType(AccountType.PAYABLE);
+		paymentLog.setAccountId(record.getId());
+		paymentLog.setAmount(amount);
+		paymentLog.setPaymentDate(request.getPaymentDate());
+		paymentLog.setRemark(trimToNull(request.getRemark()));
+		paymentLog.setCreatedBy(operator.getId());
+		paymentLogRepository.save(paymentLog);
+
+		savePayablePaymentOperationLog(operator, record.getId(), beforeSnapshot, buildPayableSnapshot(record), paymentLog);
+
+		return new PayablePaymentResponse(newRemainingAmount, newStatus.name());
+	}
+
 	private void savePaymentOperationLog(
 			User operator,
 			Long accountId,
@@ -205,14 +351,68 @@ public class AccountService {
 		log.setEntityType(ENTITY_TYPE_RECEIVABLE);
 		log.setEntityId(accountId);
 		log.setBeforeValue(toJson(beforeSnapshot));
-		log.setAfterValue(toJson(Map.of(
-				"receivable", afterSnapshot,
-				"paymentLog", Map.of(
-						"id", paymentLog.getId(),
-						"amount", paymentLog.getAmount(),
-						"paymentDate", paymentLog.getPaymentDate().toString(),
-						"remark", paymentLog.getRemark()))));
+		log.setAfterValue(toJson(buildPaymentAfterSnapshot("receivable", afterSnapshot, paymentLog)));
 		operationLogRepository.save(log);
+	}
+
+	private Map<String, Object> buildPaymentAfterSnapshot(
+			String accountKey,
+			Map<String, Object> afterSnapshot,
+			PaymentLog paymentLog) {
+		Map<String, Object> paymentLogSnapshot = new LinkedHashMap<>();
+		paymentLogSnapshot.put("id", paymentLog.getId());
+		paymentLogSnapshot.put("amount", paymentLog.getAmount());
+		paymentLogSnapshot.put("paymentDate", paymentLog.getPaymentDate().toString());
+		paymentLogSnapshot.put("remark", paymentLog.getRemark());
+
+		Map<String, Object> result = new LinkedHashMap<>();
+		result.put(accountKey, afterSnapshot);
+		result.put("paymentLog", paymentLogSnapshot);
+		return result;
+	}
+
+	private void savePayablePaymentOperationLog(
+			User operator,
+			Long accountId,
+			Map<String, Object> beforeSnapshot,
+			Map<String, Object> afterSnapshot,
+			PaymentLog paymentLog) {
+		OperationLog log = new OperationLog();
+		log.setOperatorId(operator.getId());
+		log.setOperatorName(operator.getName());
+		log.setAction(ACTION_PAYMENT_LOG);
+		log.setEntityType(ENTITY_TYPE_PAYABLE);
+		log.setEntityId(accountId);
+		log.setBeforeValue(toJson(beforeSnapshot));
+		log.setAfterValue(toJson(buildPaymentAfterSnapshot("payable", afterSnapshot, paymentLog)));
+		operationLogRepository.save(log);
+	}
+
+	private void savePayableCreateOperationLog(User operator, AccountPayable record) {
+		OperationLog log = new OperationLog();
+		log.setOperatorId(operator.getId());
+		log.setOperatorName(operator.getName());
+		log.setAction(ACTION_PAYABLE_CREATE);
+		log.setEntityType(ENTITY_TYPE_PAYABLE);
+		log.setEntityId(record.getId());
+		log.setBeforeValue(null);
+		log.setAfterValue(toJson(buildPayableSnapshot(record)));
+		operationLogRepository.save(log);
+	}
+
+	private Map<String, Object> buildPayableSnapshot(AccountPayable record) {
+		Map<String, Object> snapshot = new LinkedHashMap<>();
+		snapshot.put("id", record.getId());
+		snapshot.put("supplierId", record.getSupplierId());
+		snapshot.put("supplierName", record.getSupplierName());
+		snapshot.put("originalAmount", record.getOriginalAmount());
+		snapshot.put("paidAmount", record.getPaidAmount());
+		snapshot.put("remainingAmount", record.getRemainingAmount());
+		snapshot.put("occurDate", record.getOccurDate().toString());
+		snapshot.put("inboundId", record.getInboundId());
+		snapshot.put("remark", record.getRemark());
+		snapshot.put("status", record.getStatus().name());
+		return snapshot;
 	}
 
 	private void saveReceivableCreateOperationLog(User operator, AccountReceivable record) {
@@ -270,10 +470,16 @@ public class AccountService {
 		if (records.isEmpty()) {
 			return Map.of();
 		}
+		return loadPaymentLogs(records.stream().map(AccountReceivable::getId).toList(), AccountType.RECEIVABLE);
+	}
 
-		List<Long> accountIds = records.stream().map(AccountReceivable::getId).toList();
+	private Map<Long, List<PaymentLogResponse>> loadPaymentLogs(List<Long> accountIds, AccountType accountType) {
+		if (accountIds.isEmpty()) {
+			return Map.of();
+		}
+
 		List<PaymentLog> paymentLogs = paymentLogRepository
-				.findByAccountTypeAndAccountIdInOrderByPaymentDateDescIdDesc(AccountType.RECEIVABLE, accountIds);
+				.findByAccountTypeAndAccountIdInOrderByPaymentDateDescIdDesc(accountType, accountIds);
 
 		Map<Long, List<PaymentLogResponse>> grouped = new LinkedHashMap<>();
 		for (PaymentLog log : paymentLogs) {
@@ -281,6 +487,31 @@ public class AccountService {
 					.add(toPaymentLogResponse(log));
 		}
 		return grouped;
+	}
+
+	private PayableSummaryItemResponse toPayableSummaryItem(PayableSummaryProjection row) {
+		return new PayableSummaryItemResponse(
+				row.getSupplierId(),
+				row.getSupplierName(),
+				row.getOriginalAmount(),
+				row.getPaidAmount(),
+				row.getRemainingAmount(),
+				row.getOldestUnpaidDate(),
+				row.getDaysSinceOldest() != null ? row.getDaysSinceOldest() : 0,
+				row.getStatus());
+	}
+
+	private PayableRecordResponse toPayableRecordResponse(AccountPayable record, List<PaymentLogResponse> paymentLogs) {
+		return new PayableRecordResponse(
+				record.getId(),
+				record.getOriginalAmount(),
+				record.getPaidAmount(),
+				record.getRemainingAmount(),
+				record.getOccurDate(),
+				record.getStatus().name(),
+				record.getInboundId(),
+				record.getRemark(),
+				paymentLogs);
 	}
 
 	private ReceivableSummaryItemResponse toSummaryItem(ReceivableSummaryProjection row) {

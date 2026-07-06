@@ -1,12 +1,19 @@
 package com.beewax.controller;
 
+import com.beewax.dto.request.PayableCreateRequest;
+import com.beewax.dto.request.PayablePaymentRequest;
 import com.beewax.dto.request.ReceivableCreateRequest;
 import com.beewax.dto.request.ReceivablePaymentRequest;
 import com.beewax.dto.response.ApiResponse;
+import com.beewax.dto.response.PayableCreateResponse;
+import com.beewax.dto.response.PayableDetailResponse;
+import com.beewax.dto.response.PayableListResponse;
+import com.beewax.dto.response.PayablePaymentResponse;
 import com.beewax.dto.response.ReceivableCreateResponse;
 import com.beewax.dto.response.ReceivableDetailResponse;
 import com.beewax.dto.response.ReceivableListResponse;
 import com.beewax.dto.response.ReceivablePaymentResponse;
+import com.beewax.entity.AccountPayable.PayableStatus;
 import com.beewax.entity.AccountReceivable.ReceivableStatus;
 import com.beewax.service.AccountService;
 import jakarta.validation.Valid;
@@ -59,5 +66,35 @@ public class AccountsController {
 			@PathVariable Long id,
 			@Valid @RequestBody ReceivablePaymentRequest request) {
 		return ApiResponse.ok(accountService.registerReceivablePayment(id, request));
+	}
+
+	@GetMapping("/payable")
+	public ApiResponse<PayableListResponse> listPayables(
+			@RequestParam(required = false) PayableStatus status,
+			@RequestParam(required = false) String keyword,
+			@RequestParam(defaultValue = "1") int page,
+			@RequestParam(defaultValue = "20") int size) {
+		return ApiResponse.ok(accountService.listPayables(keyword, status, page, size));
+	}
+
+	@PostMapping("/payable")
+	public ApiResponse<PayableCreateResponse> createPayable(
+			@Valid @RequestBody PayableCreateRequest request) {
+		return ApiResponse.ok(accountService.createPayable(request));
+	}
+
+	@GetMapping("/payable/detail")
+	public ApiResponse<PayableDetailResponse> getPayableDetail(
+			@RequestParam Long supplierId,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+		return ApiResponse.ok(accountService.getPayableDetail(supplierId, startDate, endDate));
+	}
+
+	@PostMapping("/payable/{id}/payment")
+	public ApiResponse<PayablePaymentResponse> registerPayablePayment(
+			@PathVariable Long id,
+			@Valid @RequestBody PayablePaymentRequest request) {
+		return ApiResponse.ok(accountService.registerPayablePayment(id, request));
 	}
 }
