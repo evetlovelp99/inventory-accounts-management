@@ -77,6 +77,12 @@ _目标：仓管可完整录入入库、出库，老板可查库存和流水_
 - [x] 1.22 前端：实现 `StockOverviewPage`（DataTable + 搜索 + 余量为零行变红，行点击跳流水页）
 - [x] 1.23 前端：实现 `ProductLedgerPage`（日期范围筛选 + 入库/出库流水合并列表）
 
+### 后端/前端 — 溯源信息（选填，供后续人工导出给外部溯源系统）
+
+- [x] 1.24 数据库：`inbound_records` 新增溯源相关字段（`origin_place`、`harvest_date`、`inspect_no`、`inspect_org`、`inspect_date`、`inspect_file_url`、`expiry_date`），不新增批次编号字段，沿用现有 `id` 主键
+- [x] 1.25 前端：`InboundEntryPage` 增加「生产信息（选填）」折叠区块，含检测报告文件上传
+- [x] 1.26 前端：`ProductLedgerPage` / 流水详情展示已录入的生产信息
+
 **✅ 阶段 1 验收**：仓管可录入一笔入库 → 查看库存余量增加 → 录入出库（跨批次）→ 余量正确扣减 → 查看该产品完整流水。
 
 ---
