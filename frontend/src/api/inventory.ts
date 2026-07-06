@@ -3,6 +3,16 @@ import apiClient, { type ApiResponse } from './client';
 import type { InboundBatch } from '../components/EntryForm/batchTypes';
 import type { PageResult } from './settings';
 
+export interface InboundProductionInfo {
+	originPlace?: string;
+	harvestDate?: string;
+	inspectNo?: string;
+	inspectOrg?: string;
+	inspectDate?: string;
+	inspectFileUrl?: string;
+	expiryDate?: string;
+}
+
 export interface InboundCreatePayload {
 	productId: number;
 	supplierId: number;
@@ -10,6 +20,13 @@ export interface InboundCreatePayload {
 	quantity: number;
 	unitPrice: number;
 	remark?: string;
+	originPlace?: string;
+	harvestDate?: string;
+	inspectNo?: string;
+	inspectOrg?: string;
+	inspectDate?: string;
+	inspectFileUrl?: string;
+	expiryDate?: string;
 }
 
 export interface InboundCreateResult {
@@ -42,6 +59,35 @@ export async function createInbound(payload: InboundCreatePayload): Promise<Inbo
 	}
 
 	return response.data.data;
+}
+
+export async function uploadInspectReport(file: File): Promise<string> {
+	const formData = new FormData();
+	formData.append('file', file);
+	const response = await apiClient.post<ApiResponse<{ url: string }>>(
+		'/files/inspect-reports',
+		formData,
+		{
+			headers: { 'Content-Type': 'multipart/form-data' },
+		},
+	);
+
+	if (response.data.code !== 200) {
+		throw new Error(response.data.message);
+	}
+
+	return response.data.data.url;
+}
+
+export async function downloadInspectReport(url: string, filename: string): Promise<void> {
+	const path = url.startsWith('/api/') ? url.slice(4) : url;
+	const response = await apiClient.get(path, { responseType: 'blob' });
+	const blobUrl = window.URL.createObjectURL(response.data);
+	const link = document.createElement('a');
+	link.href = blobUrl;
+	link.download = filename;
+	link.click();
+	window.URL.revokeObjectURL(blobUrl);
 }
 
 export interface StockItem {
@@ -130,6 +176,7 @@ export interface LedgerEntry {
 	amount: number;
 	partyName: string;
 	remark: string | null;
+	productionInfo: InboundProductionInfo | null;
 }
 
 export interface ProductLedgerResult {

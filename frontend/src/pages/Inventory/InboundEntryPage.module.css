@@ -25,3 +25,14 @@
 	font-weight: var(--font-weight-semibold);
 	color: var(--color-ink);
 }
+
+.productionCollapse {
+	margin-bottom: var(--space-4);
+}
+
+.uploadHint {
+	margin: var(--space-1) 0 0;
+	font-size: var(--font-size-caption);
+	line-height: var(--line-height-caption);
+	color: var(--color-ash);
+}

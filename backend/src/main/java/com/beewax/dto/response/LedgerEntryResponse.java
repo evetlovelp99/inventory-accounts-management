@@ -18,4 +18,5 @@ public class LedgerEntryResponse {
 	private BigDecimal amount;
 	private String partyName;
 	private String remark;
+	private InboundProductionInfoResponse productionInfo;
 }

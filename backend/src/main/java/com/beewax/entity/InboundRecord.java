@@ -59,6 +59,27 @@ public class InboundRecord {
 	@Column(name = "is_imported", nullable = false)
 	private Boolean imported = false;
 
+	@Column(name = "origin_place", length = 100)
+	private String originPlace;
+
+	@Column(name = "harvest_date")
+	private LocalDate harvestDate;
+
+	@Column(name = "inspect_no", length = 50)
+	private String inspectNo;
+
+	@Column(name = "inspect_org", length = 100)
+	private String inspectOrg;
+
+	@Column(name = "inspect_date")
+	private LocalDate inspectDate;
+
+	@Column(name = "inspect_file_url", length = 255)
+	private String inspectFileUrl;
+
+	@Column(name = "expiry_date")
+	private LocalDate expiryDate;
+
 	@Column(name = "created_at", nullable = false, insertable = false, updatable = false)
 	private LocalDateTime createdAt;
 

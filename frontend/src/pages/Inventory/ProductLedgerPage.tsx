@@ -2,8 +2,10 @@ import type { ColumnsType } from 'antd/es/table';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
+	downloadInspectReport,
 	getInventoryErrorMessage,
 	getProductLedger,
+	type InboundProductionInfo,
 	type LedgerEntry,
 	type LedgerEntryType,
 } from '../../api/inventory';
@@ -22,6 +24,10 @@ const DATE_FILTER_KEY = 'date';
 function formatLedgerDate(dateStr: string): string {
 	const [, month, day] = dateStr.split('-');
 	return `${month}-${day}`;
+}
+
+function formatFullDate(dateStr: string): string {
+	return dateStr;
 }
 
 function formatMoney(amount: number): string {
@@ -62,8 +68,93 @@ function getDateRangeFromActiveFilters(activeFilters: ActiveFilter[]): DateRange
 	};
 }
 
+function getInspectFileName(url: string): string {
+	const parts = url.split('/');
+	return parts[parts.length - 1] || '检测报告';
+}
+
 interface LedgerTableRow extends LedgerEntry {
 	rowId: string;
+}
+
+interface ProductionInfoDetailProps {
+	info: InboundProductionInfo;
+}
+
+function ProductionInfoDetail({ info }: ProductionInfoDetailProps) {
+	const showAlert = useAlertStore((state) => state.showAlert);
+
+	const handleDownload = async () => {
+		if (!info.inspectFileUrl) {
+			return;
+		}
+		try {
+			await downloadInspectReport(
+				info.inspectFileUrl,
+				getInspectFileName(info.inspectFileUrl),
+			);
+		} catch (error) {
+			showAlert(getInventoryErrorMessage(error));
+		}
+	};
+
+	return (
+		<div className={styles.productionDetail}>
+			<p className={styles.productionTitle}>生产信息</p>
+			<dl className={styles.productionList}>
+				{info.originPlace ? (
+					<>
+						<dt>产地/蜂场</dt>
+						<dd>{info.originPlace}</dd>
+					</>
+				) : null}
+				{info.harvestDate ? (
+					<>
+						<dt>采集日期</dt>
+						<dd>{formatFullDate(info.harvestDate)}</dd>
+					</>
+				) : null}
+				{info.inspectNo ? (
+					<>
+						<dt>检测报告编号</dt>
+						<dd>{info.inspectNo}</dd>
+					</>
+				) : null}
+				{info.inspectOrg ? (
+					<>
+						<dt>检测机构</dt>
+						<dd>{info.inspectOrg}</dd>
+					</>
+				) : null}
+				{info.inspectDate ? (
+					<>
+						<dt>检测日期</dt>
+						<dd>{formatFullDate(info.inspectDate)}</dd>
+					</>
+				) : null}
+				{info.expiryDate ? (
+					<>
+						<dt>保质期至</dt>
+						<dd>{formatFullDate(info.expiryDate)}</dd>
+					</>
+				) : null}
+				{info.inspectFileUrl ? (
+					<>
+						<dt>检测报告</dt>
+						<dd>
+							<button
+								type="button"
+								className={styles.fileLink}
+								onClick={() => void handleDownload()}
+							>
+								{getInspectFileName(info.inspectFileUrl)}
+							</button>
+						</dd>
+					</>
+				) : null}
+			</dl>
+		</div>
+	);
 }
 
 export default function ProductLedgerPage() {
@@ -235,6 +326,11 @@ export default function ProductLedgerPage() {
 					total,
 					showSizeChanger: false,
 					onChange: (nextPage) => setPage(nextPage),
+				}}
+				expandable={{
+					expandedRowRender: (row) =>
+						row.productionInfo ? <ProductionInfoDetail info={row.productionInfo} /> : null,
+					rowExpandable: (row) => row.productionInfo !== null,
 				}}
 			/>
 		</div>

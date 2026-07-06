@@ -1,5 +1,6 @@
 import { Table } from 'antd';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import type { ExpandableConfig } from 'antd/es/table/interface';
 import type { ReactNode } from 'react';
 import styles from './DataTable.module.css';
 
@@ -19,6 +20,7 @@ export interface DataTableProps<T extends object> {
 	emptyAction?: ReactNode;
 	pagination?: TablePaginationConfig | false;
 	rowClassName?: (row: T) => string;
+	expandable?: ExpandableConfig<T>;
 }
 
 function isActionColumn<T extends object>(column: ColumnsType<T>[number]): boolean {
@@ -84,6 +86,7 @@ export default function DataTable<T extends object>({
 	emptyAction,
 	pagination,
 	rowClassName,
+	expandable,
 }: DataTableProps<T>) {
 	const enhancedColumns = columns.map((column) => {
 		const nextColumn = { ...column };
@@ -144,6 +147,7 @@ export default function DataTable<T extends object>({
 						.filter(Boolean)
 						.join(' ')
 				}
+				expandable={expandable}
 			/>
 		</div>
 	);

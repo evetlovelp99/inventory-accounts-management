@@ -33,4 +33,18 @@ public class InboundCreateRequest {
 	private String remark;
 
 	private Boolean createPayable;
+
+	private String originPlace;
+
+	private LocalDate harvestDate;
+
+	private String inspectNo;
+
+	private String inspectOrg;
+
+	private LocalDate inspectDate;
+
+	private String inspectFileUrl;
+
+	private LocalDate expiryDate;
 }

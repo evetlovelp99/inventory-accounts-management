@@ -20,4 +20,18 @@ public interface ProductLedgerEntryProjection {
 	String getPartyName();
 
 	String getRemark();
+
+	String getOriginPlace();
+
+	LocalDate getHarvestDate();
+
+	String getInspectNo();
+
+	String getInspectOrg();
+
+	LocalDate getInspectDate();
+
+	String getInspectFileUrl();
+
+	LocalDate getExpiryDate();
 }

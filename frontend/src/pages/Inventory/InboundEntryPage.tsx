@@ -1,8 +1,13 @@
-import { DatePicker, Form, Input, InputNumber, Select } from 'antd';
+import { Button, Collapse, DatePicker, Form, Input, InputNumber, Select, Upload } from 'antd';
+import type { UploadFile } from 'antd/es/upload/interface';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createInbound, getInventoryErrorMessage } from '../../api/inventory';
+import {
+	createInbound,
+	getInventoryErrorMessage,
+	uploadInspectReport,
+} from '../../api/inventory';
 import {
 	listProducts,
 	listSuppliers,
@@ -21,9 +26,17 @@ interface InboundFormValues {
 	quantity: number;
 	unitPrice: number;
 	remark?: string;
+	originPlace?: string;
+	harvestDate?: Dayjs;
+	inspectNo?: string;
+	inspectOrg?: string;
+	inspectDate?: Dayjs;
+	inspectFileUrl?: string;
+	expiryDate?: Dayjs;
 }
 
 const DROPDOWN_PAGE_SIZE = 500;
+const ACCEPTED_FILE_TYPES = '.pdf,.jpg,.jpeg,.png';
 
 function formatMoney(amount: number): string {
 	return amount.toLocaleString('zh-CN', {
@@ -35,6 +48,10 @@ function formatMoney(amount: number): string {
 function formatProductLabel(product: Product): string {
 	const spec = product.spec ? `（${product.spec}）` : '';
 	return `${product.name}${spec} · ${product.unit}`;
+}
+
+function formatDateValue(value?: Dayjs): string | undefined {
+	return value ? value.format('YYYY-MM-DD') : undefined;
 }
 
 function InboundTotalDisplay() {
@@ -62,9 +79,12 @@ export default function InboundEntryPage() {
 	const navigate = useNavigate();
 	const { showToast } = useToast();
 	const showAlert = useAlertStore((state) => state.showAlert);
+	const [form] = Form.useForm<InboundFormValues>();
 	const [products, setProducts] = useState<Product[]>([]);
 	const [suppliers, setSuppliers] = useState<Supplier[]>([]);
 	const [optionsLoading, setOptionsLoading] = useState(true);
+	const [inspectFileList, setInspectFileList] = useState<UploadFile[]>([]);
+	const [inspectUploading, setInspectUploading] = useState(false);
 
 	useEffect(() => {
 		const loadOptions = async () => {
@@ -104,6 +124,28 @@ export default function InboundEntryPage() {
 		[suppliers],
 	);
 
+	const handleInspectUpload = async (file: File) => {
+		setInspectUploading(true);
+		try {
+			const url = await uploadInspectReport(file);
+			form.setFieldValue('inspectFileUrl', url);
+			setInspectFileList([
+				{
+					uid: url,
+					name: file.name,
+					status: 'done',
+					url,
+				},
+			]);
+		} catch (error) {
+			showAlert(getInventoryErrorMessage(error));
+			setInspectFileList([]);
+			form.setFieldValue('inspectFileUrl', undefined);
+		} finally {
+			setInspectUploading(false);
+		}
+	};
+
 	const handleSubmit = async (values: Record<string, unknown>) => {
 		const formValues = values as unknown as InboundFormValues;
 		try {
@@ -114,6 +156,13 @@ export default function InboundEntryPage() {
 				quantity: formValues.quantity,
 				unitPrice: formValues.unitPrice,
 				remark: formValues.remark?.trim() || undefined,
+				originPlace: formValues.originPlace?.trim() || undefined,
+				harvestDate: formatDateValue(formValues.harvestDate),
+				inspectNo: formValues.inspectNo?.trim() || undefined,
+				inspectOrg: formValues.inspectOrg?.trim() || undefined,
+				inspectDate: formatDateValue(formValues.inspectDate),
+				inspectFileUrl: formValues.inspectFileUrl || undefined,
+				expiryDate: formatDateValue(formValues.expiryDate),
 			});
 			showToast('入库记录已保存', 'success');
 			navigate('/inventory/stock');
@@ -127,7 +176,8 @@ export default function InboundEntryPage() {
 		<EntryForm
 			title="录入入库"
 			submitLabel="提交入库"
-			loading={optionsLoading}
+			loading={optionsLoading || inspectUploading}
+			form={form}
 			onCancel={() => navigate('/inventory/stock')}
 			onSubmit={handleSubmit}
 		>
@@ -217,6 +267,66 @@ export default function InboundEntryPage() {
 			<Form.Item label="备注" name="remark">
 				<Input.TextArea placeholder="选填" rows={3} />
 			</Form.Item>
+
+			<Collapse
+				className={styles.productionCollapse}
+				items={[
+					{
+						key: 'production',
+						label: '生产信息（选填）',
+						children: (
+							<>
+								<Form.Item label="产地/蜂场" name="originPlace">
+									<Input placeholder="选填" />
+								</Form.Item>
+
+								<div className={styles.fieldRow}>
+									<Form.Item label="采集日期" name="harvestDate">
+										<DatePicker style={{ width: '100%' }} />
+									</Form.Item>
+
+									<Form.Item label="保质期至" name="expiryDate">
+										<DatePicker style={{ width: '100%' }} />
+									</Form.Item>
+								</div>
+
+								<div className={styles.fieldRow}>
+									<Form.Item label="检测报告编号" name="inspectNo">
+										<Input placeholder="选填" />
+									</Form.Item>
+
+									<Form.Item label="检测机构" name="inspectOrg">
+										<Input placeholder="选填" />
+									</Form.Item>
+								</div>
+
+								<Form.Item label="检测日期" name="inspectDate">
+									<DatePicker style={{ width: '100%' }} />
+								</Form.Item>
+
+								<Form.Item label="检测报告" name="inspectFileUrl">
+									<Upload
+										accept={ACCEPTED_FILE_TYPES}
+										maxCount={1}
+										fileList={inspectFileList}
+										beforeUpload={(file) => {
+											void handleInspectUpload(file);
+											return false;
+										}}
+										onRemove={() => {
+											setInspectFileList([]);
+											form.setFieldValue('inspectFileUrl', undefined);
+										}}
+									>
+										<Button>上传文件</Button>
+									</Upload>
+									<p className={styles.uploadHint}>支持 PDF、JPG、PNG，最大 10MB</p>
+								</Form.Item>
+							</>
+						),
+					},
+				]}
+			/>
 		</EntryForm>
 	);
 }

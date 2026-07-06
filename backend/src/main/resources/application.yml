@@ -6,6 +6,15 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+app:
+  upload:
+    dir: uploads
+    inspect-report-subdir: inspect-reports
 
 jwt:
   secret: ${JWT_SECRET:dev-only-change-me-beewax-jwt-secret-key-minimum-256-bits!!}

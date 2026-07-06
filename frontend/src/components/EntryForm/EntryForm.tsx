@@ -1,4 +1,5 @@
 import { Form } from 'antd';
+import type { FormInstance } from 'antd/es/form';
 import { useState, type ReactNode } from 'react';
 import Button from '../Button/Button';
 import styles from './EntryForm.module.css';
@@ -10,6 +11,7 @@ export interface EntryFormProps {
 	children: ReactNode;
 	submitLabel?: string;
 	loading?: boolean;
+	form?: FormInstance;
 }
 
 export default function EntryForm({
@@ -19,8 +21,10 @@ export default function EntryForm({
 	children,
 	submitLabel = '提交',
 	loading = false,
+	form: externalForm,
 }: EntryFormProps) {
-	const [form] = Form.useForm();
+	const [internalForm] = Form.useForm();
+	const form = externalForm ?? internalForm;
 	const [submitting, setSubmitting] = useState(false);
 	const isDisabled = submitting || loading;
 

@@ -6,6 +6,7 @@ import com.beewax.dto.request.OutboundBatchLineRequest;
 import com.beewax.dto.request.OutboundCreateRequest;
 import com.beewax.dto.response.InboundBatchResponse;
 import com.beewax.dto.response.InboundCreateResponse;
+import com.beewax.dto.response.InboundProductionInfoResponse;
 import com.beewax.dto.response.LedgerEntryResponse;
 import com.beewax.dto.response.OutboundCreateResponse;
 import com.beewax.dto.response.PageResponse;
@@ -130,6 +131,13 @@ public class InventoryService {
 		record.setRemark(trimToNull(request.getRemark()));
 		record.setCreatedBy(operator.getId());
 		record.setImported(false);
+		record.setOriginPlace(trimToNull(request.getOriginPlace()));
+		record.setHarvestDate(request.getHarvestDate());
+		record.setInspectNo(trimToNull(request.getInspectNo()));
+		record.setInspectOrg(trimToNull(request.getInspectOrg()));
+		record.setInspectDate(request.getInspectDate());
+		record.setInspectFileUrl(trimToNull(request.getInspectFileUrl()));
+		record.setExpiryDate(request.getExpiryDate());
 
 		InboundRecord saved = inboundRecordRepository.save(record);
 		saveOperationLog(operator, saved);
@@ -184,7 +192,8 @@ public class InventoryService {
 						row.getUnitPrice(),
 						row.getAmount(),
 						row.getPartyName(),
-						row.getRemark()))
+						row.getRemark(),
+						buildProductionInfo(row)))
 				.toList();
 
 		return new ProductLedgerResponse(product.getName(), product.getUnit(), list, result.getTotalElements());
@@ -364,7 +373,47 @@ public class InventoryService {
 		snapshot.put("totalAmount", record.getTotalAmount());
 		snapshot.put("remainingQty", record.getRemainingQty());
 		snapshot.put("remark", record.getRemark());
+		snapshot.put("originPlace", record.getOriginPlace());
+		snapshot.put("harvestDate", record.getHarvestDate() != null ? record.getHarvestDate().toString() : null);
+		snapshot.put("inspectNo", record.getInspectNo());
+		snapshot.put("inspectOrg", record.getInspectOrg());
+		snapshot.put("inspectDate", record.getInspectDate() != null ? record.getInspectDate().toString() : null);
+		snapshot.put("inspectFileUrl", record.getInspectFileUrl());
+		snapshot.put("expiryDate", record.getExpiryDate() != null ? record.getExpiryDate().toString() : null);
 		return snapshot;
+	}
+
+	private InboundProductionInfoResponse buildProductionInfo(ProductLedgerEntryProjection row) {
+		if (!"INBOUND".equals(row.getType())) {
+			return null;
+		}
+
+		String originPlace = trimToNull(row.getOriginPlace());
+		LocalDate harvestDate = row.getHarvestDate();
+		String inspectNo = trimToNull(row.getInspectNo());
+		String inspectOrg = trimToNull(row.getInspectOrg());
+		LocalDate inspectDate = row.getInspectDate();
+		String inspectFileUrl = trimToNull(row.getInspectFileUrl());
+		LocalDate expiryDate = row.getExpiryDate();
+
+		if (originPlace == null
+				&& harvestDate == null
+				&& inspectNo == null
+				&& inspectOrg == null
+				&& inspectDate == null
+				&& inspectFileUrl == null
+				&& expiryDate == null) {
+			return null;
+		}
+
+		return new InboundProductionInfoResponse(
+				originPlace,
+				harvestDate,
+				inspectNo,
+				inspectOrg,
+				inspectDate,
+				inspectFileUrl,
+				expiryDate);
 	}
 
 	private String toJson(Map<String, Object> data) {

@@ -40,3 +40,46 @@
 .toolbarWrap > :global(*) {
 	margin-bottom: 0;
 }
+
+.productionDetail {
+	padding: var(--space-2) var(--space-4);
+}
+
+.productionTitle {
+	margin: 0 0 var(--space-2);
+	font-size: var(--font-size-caption);
+	line-height: var(--line-height-caption);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-ash);
+}
+
+.productionList {
+	display: grid;
+	grid-template-columns: 120px 1fr;
+	gap: var(--space-2) var(--space-4);
+	margin: 0;
+}
+
+.productionList dt {
+	margin: 0;
+	font-size: var(--font-size-caption);
+	line-height: var(--line-height-caption);
+	color: var(--color-ash);
+}
+
+.productionList dd {
+	margin: 0;
+	font-size: var(--font-size-body);
+	line-height: var(--line-height-body);
+	color: var(--color-ink);
+}
+
+.fileLink {
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--color-amber);
+	font: inherit;
+	cursor: pointer;
+	text-decoration: underline;
+}

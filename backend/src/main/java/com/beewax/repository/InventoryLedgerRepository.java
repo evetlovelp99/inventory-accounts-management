@@ -19,7 +19,14 @@ public interface InventoryLedgerRepository extends Repository<InboundRecord, Lon
 			       ledger.unitPrice AS unitPrice,
 			       ledger.amount AS amount,
 			       ledger.partyName AS partyName,
-			       ledger.remark AS remark
+			       ledger.remark AS remark,
+			       ledger.originPlace AS originPlace,
+			       ledger.harvestDate AS harvestDate,
+			       ledger.inspectNo AS inspectNo,
+			       ledger.inspectOrg AS inspectOrg,
+			       ledger.inspectDate AS inspectDate,
+			       ledger.inspectFileUrl AS inspectFileUrl,
+			       ledger.expiryDate AS expiryDate
 			FROM (
 			  SELECT i.id AS id,
 			         'INBOUND' AS type,
@@ -28,7 +35,14 @@ public interface InventoryLedgerRepository extends Repository<InboundRecord, Lon
 			         i.unit_price AS unitPrice,
 			         i.total_amount AS amount,
 			         i.supplier_name AS partyName,
-			         i.remark AS remark
+			         i.remark AS remark,
+			         i.origin_place AS originPlace,
+			         i.harvest_date AS harvestDate,
+			         i.inspect_no AS inspectNo,
+			         i.inspect_org AS inspectOrg,
+			         i.inspect_date AS inspectDate,
+			         i.inspect_file_url AS inspectFileUrl,
+			         i.expiry_date AS expiryDate
 			  FROM inbound_records i
 			  WHERE i.product_id = :productId
 			    AND (:startDate IS NULL OR i.inbound_date >= :startDate)
@@ -41,7 +55,14 @@ public interface InventoryLedgerRepository extends Repository<InboundRecord, Lon
 			         o.sale_unit_price AS unitPrice,
 			         o.total_sale_amount AS amount,
 			         o.customer_name AS partyName,
-			         o.remark AS remark
+			         o.remark AS remark,
+			         NULL AS originPlace,
+			         NULL AS harvestDate,
+			         NULL AS inspectNo,
+			         NULL AS inspectOrg,
+			         NULL AS inspectDate,
+			         NULL AS inspectFileUrl,
+			         NULL AS expiryDate
 			  FROM outbound_records o
 			  WHERE o.product_id = :productId
 			    AND (:startDate IS NULL OR o.outbound_date >= :startDate)
