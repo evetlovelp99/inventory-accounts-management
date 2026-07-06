@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 
 public interface AccountReceivableRepository extends JpaRepository<AccountReceivable, Long> {
 
@@ -68,4 +70,16 @@ public interface AccountReceivableRepository extends JpaRepository<AccountReceiv
 	BigDecimal sumRemainingAmount(
 			@Param("keyword") String keyword,
 			@Param("status") String status);
+
+	@Query("""
+			SELECT ar FROM AccountReceivable ar
+			WHERE ar.customerId = :customerId
+			  AND (:startDate IS NULL OR ar.occurDate >= :startDate)
+			  AND (:endDate IS NULL OR ar.occurDate <= :endDate)
+			ORDER BY ar.occurDate DESC, ar.id DESC
+			""")
+	List<AccountReceivable> findByCustomerIdWithDateFilter(
+			@Param("customerId") Long customerId,
+			@Param("startDate") LocalDate startDate,
+			@Param("endDate") LocalDate endDate);
 }
