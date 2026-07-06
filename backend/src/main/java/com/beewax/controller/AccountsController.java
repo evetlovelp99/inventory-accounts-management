@@ -1,7 +1,9 @@
 package com.beewax.controller;
 
+import com.beewax.dto.request.ReceivableCreateRequest;
 import com.beewax.dto.request.ReceivablePaymentRequest;
 import com.beewax.dto.response.ApiResponse;
+import com.beewax.dto.response.ReceivableCreateResponse;
 import com.beewax.dto.response.ReceivableDetailResponse;
 import com.beewax.dto.response.ReceivableListResponse;
 import com.beewax.dto.response.ReceivablePaymentResponse;
@@ -36,6 +38,12 @@ public class AccountsController {
 			@RequestParam(defaultValue = "1") int page,
 			@RequestParam(defaultValue = "20") int size) {
 		return ApiResponse.ok(accountService.listReceivables(keyword, status, page, size));
+	}
+
+	@PostMapping("/receivable")
+	public ApiResponse<ReceivableCreateResponse> createReceivable(
+			@Valid @RequestBody ReceivableCreateRequest request) {
+		return ApiResponse.ok(accountService.createReceivable(request));
 	}
 
 	@GetMapping("/receivable/detail")

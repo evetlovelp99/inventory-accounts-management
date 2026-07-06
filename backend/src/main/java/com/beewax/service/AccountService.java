@@ -1,8 +1,10 @@
 package com.beewax.service;
 
 import com.beewax.config.JwtAuthenticationFilter.JwtPrincipal;
+import com.beewax.dto.request.ReceivableCreateRequest;
 import com.beewax.dto.request.ReceivablePaymentRequest;
 import com.beewax.dto.response.PaymentLogResponse;
+import com.beewax.dto.response.ReceivableCreateResponse;
 import com.beewax.dto.response.ReceivableDetailResponse;
 import com.beewax.dto.response.ReceivableListResponse;
 import com.beewax.dto.response.ReceivablePaymentResponse;
@@ -10,6 +12,8 @@ import com.beewax.dto.response.ReceivableRecordResponse;
 import com.beewax.dto.response.ReceivableSummaryItemResponse;
 import com.beewax.entity.AccountReceivable;
 import com.beewax.entity.AccountReceivable.ReceivableStatus;
+import com.beewax.entity.Customer;
+import com.beewax.entity.Customer.CustomerStatus;
 import com.beewax.entity.OperationLog;
 import com.beewax.entity.PaymentLog;
 import com.beewax.entity.PaymentLog.AccountType;
@@ -18,6 +22,7 @@ import com.beewax.exception.BusinessException;
 import com.beewax.repository.AccountReceivableRepository;
 import com.beewax.repository.CustomerRepository;
 import com.beewax.repository.OperationLogRepository;
+import com.beewax.repository.OutboundRecordRepository;
 import com.beewax.repository.PaymentLogRepository;
 import com.beewax.repository.ReceivableSummaryProjection;
 import com.beewax.repository.UserRepository;
@@ -43,10 +48,12 @@ public class AccountService {
 
 	private static final String ENTITY_TYPE_RECEIVABLE = "account_receivables";
 	private static final String ACTION_PAYMENT_LOG = "PAYMENT_LOG";
+	private static final String ACTION_RECEIVABLE_CREATE = "RECEIVABLE_CREATE";
 
 	private final AccountReceivableRepository accountReceivableRepository;
 	private final PaymentLogRepository paymentLogRepository;
 	private final CustomerRepository customerRepository;
+	private final OutboundRecordRepository outboundRecordRepository;
 	private final OperationLogRepository operationLogRepository;
 	private final UserRepository userRepository;
 	private final ObjectMapper objectMapper;
@@ -55,12 +62,14 @@ public class AccountService {
 			AccountReceivableRepository accountReceivableRepository,
 			PaymentLogRepository paymentLogRepository,
 			CustomerRepository customerRepository,
+			OutboundRecordRepository outboundRecordRepository,
 			OperationLogRepository operationLogRepository,
 			UserRepository userRepository,
 			ObjectMapper objectMapper) {
 		this.accountReceivableRepository = accountReceivableRepository;
 		this.paymentLogRepository = paymentLogRepository;
 		this.customerRepository = customerRepository;
+		this.outboundRecordRepository = outboundRecordRepository;
 		this.operationLogRepository = operationLogRepository;
 		this.userRepository = userRepository;
 		this.objectMapper = objectMapper;
@@ -95,6 +104,42 @@ public class AccountService {
 				.toList();
 
 		return new ReceivableDetailResponse(customerName, recordResponses);
+	}
+
+	@Transactional
+	public ReceivableCreateResponse createReceivable(ReceivableCreateRequest request) {
+		Customer customer = customerRepository.findById(request.getCustomerId())
+				.orElseThrow(() -> new BusinessException(400, "客户不存在"));
+		if (customer.getStatus() == CustomerStatus.INACTIVE) {
+			throw new BusinessException(400, "客户已停用");
+		}
+
+		if (request.getOutboundId() != null
+				&& !outboundRecordRepository.existsById(request.getOutboundId())) {
+			throw new BusinessException(400, "出库单不存在");
+		}
+
+		User operator = userRepository.findById(getCurrentUser().userId())
+				.orElseThrow(() -> new BusinessException(401, "未登录或 token 过期"));
+
+		BigDecimal originalAmount = request.getOriginalAmount();
+		AccountReceivable record = new AccountReceivable();
+		record.setCustomerId(customer.getId());
+		record.setCustomerName(customer.getName());
+		record.setOutboundId(request.getOutboundId());
+		record.setOriginalAmount(originalAmount);
+		record.setPaidAmount(BigDecimal.ZERO);
+		record.setRemainingAmount(originalAmount);
+		record.setOccurDate(request.getOccurDate());
+		record.setStatus(ReceivableStatus.UNPAID);
+		record.setRemark(trimToNull(request.getRemark()));
+		record.setCreatedBy(operator.getId());
+		record.setImported(false);
+
+		AccountReceivable saved = accountReceivableRepository.save(record);
+		saveReceivableCreateOperationLog(operator, saved);
+
+		return new ReceivableCreateResponse(saved.getId());
 	}
 
 	@Transactional
@@ -170,6 +215,18 @@ public class AccountService {
 		operationLogRepository.save(log);
 	}
 
+	private void saveReceivableCreateOperationLog(User operator, AccountReceivable record) {
+		OperationLog log = new OperationLog();
+		log.setOperatorId(operator.getId());
+		log.setOperatorName(operator.getName());
+		log.setAction(ACTION_RECEIVABLE_CREATE);
+		log.setEntityType(ENTITY_TYPE_RECEIVABLE);
+		log.setEntityId(record.getId());
+		log.setBeforeValue(null);
+		log.setAfterValue(toJson(buildReceivableSnapshot(record)));
+		operationLogRepository.save(log);
+	}
+
 	private Map<String, Object> buildReceivableSnapshot(AccountReceivable record) {
 		Map<String, Object> snapshot = new LinkedHashMap<>();
 		snapshot.put("id", record.getId());
@@ -178,6 +235,9 @@ public class AccountService {
 		snapshot.put("originalAmount", record.getOriginalAmount());
 		snapshot.put("paidAmount", record.getPaidAmount());
 		snapshot.put("remainingAmount", record.getRemainingAmount());
+		snapshot.put("occurDate", record.getOccurDate().toString());
+		snapshot.put("outboundId", record.getOutboundId());
+		snapshot.put("remark", record.getRemark());
 		snapshot.put("status", record.getStatus().name());
 		return snapshot;
 	}
