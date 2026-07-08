@@ -15,6 +15,9 @@ app:
   upload:
     dir: uploads
     inspect-report-subdir: inspect-reports
+  exchange-rate:
+    connect-timeout-ms: 5000
+    read-timeout-ms: 10000
 
 jwt:
   secret: ${JWT_SECRET:dev-only-change-me-beewax-jwt-secret-key-minimum-256-bits!!}
