@@ -3,12 +3,14 @@ package com.beewax.controller;
 import com.beewax.dto.request.InboundCreateRequest;
 import com.beewax.dto.request.OutboundCreateRequest;
 import com.beewax.dto.response.ApiResponse;
+import com.beewax.dto.response.ExchangeRateResult;
 import com.beewax.dto.response.InboundBatchResponse;
 import com.beewax.dto.response.InboundCreateResponse;
 import com.beewax.dto.response.OutboundCreateResponse;
 import com.beewax.dto.response.PageResponse;
 import com.beewax.dto.response.ProductLedgerResponse;
 import com.beewax.dto.response.StockOverviewResponse;
+import com.beewax.service.ExchangeRateService;
 import com.beewax.service.InventoryService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -28,9 +30,11 @@ import java.util.List;
 public class InventoryController {
 
 	private final InventoryService inventoryService;
+	private final ExchangeRateService exchangeRateService;
 
-	public InventoryController(InventoryService inventoryService) {
+	public InventoryController(InventoryService inventoryService, ExchangeRateService exchangeRateService) {
 		this.inventoryService = inventoryService;
+		this.exchangeRateService = exchangeRateService;
 	}
 
 	@PostMapping("/inbound")
@@ -64,5 +68,11 @@ public class InventoryController {
 	@PostMapping("/outbound")
 	public ApiResponse<OutboundCreateResponse> createOutbound(@Valid @RequestBody OutboundCreateRequest request) {
 		return ApiResponse.ok(inventoryService.createOutbound(request));
+	}
+
+	@GetMapping("/exchange-rate/cny-usd")
+	public ExchangeRateResult getCnyUsdExchangeRate(
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+		return exchangeRateService.getCnyUsdRate(date);
 	}
 }
