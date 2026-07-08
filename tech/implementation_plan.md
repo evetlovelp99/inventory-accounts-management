@@ -91,7 +91,7 @@ _目标：仓管可完整录入入库、出库，老板可查库存和流水_
 - [x] 1.30 后端：扩展 `POST /api/inventory/outbound`，支持 `currency` / `exchangeRate` 入参；`currency=USD` 时服务端二次校验汇率非空；计算 `converted_sale_amount`；`gross_profit` 计算口径切换为基于折算值
 - [ ] 1.31 后端：应收账款创建逻辑（2.7 任务内）透传出库记录的 `currency` / `exchange_rate`，计算 `converted_amount`（此任务与阶段 2 的 2.7 存在依赖，需协调顺序）
 - [ ] 1.32 后端：`GET /api/dashboard/summary` 与 `GET /api/accounts/receivable` 聚合查询切换到 `converted_*` 字段求和
-- [ ] 1.33 前端：实现 `ExchangeRateInput` 组件（loading / 自动获取失败提示 / 正常可编辑三态）
+- [x] 1.33 前端：实现 `ExchangeRateInput` 组件（loading / 自动获取失败提示 / 正常可编辑三态）
 - [ ] 1.34 前端：`OutboundEntryPage` 接入币种单选 + 条件渲染汇率框 + 提交前校验（USD 必填汇率）
 - [ ] 1.35 前端：实现 `formatCurrencyAmount` 工具函数；`StockOverviewPage` / `ProductLedgerPage` 出库列表、`ReceivablePage` 应收列表按原始币种展示金额（¥ / $ 前缀）
 - [ ] 1.36 联调测试：美元出库全链路（录入 → 应收生成 → Dashboard/应收汇总口径正确）；汇率接口失败场景确认不阻塞保存；人民币出库场景回归测试

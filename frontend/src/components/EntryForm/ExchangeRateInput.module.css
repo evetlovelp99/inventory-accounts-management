@@ -1,0 +1,31 @@
+.wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+}
+
+.inputShell {
+	position: relative;
+}
+
+.input {
+	width: 100%;
+}
+
+.loadingOverlay {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: var(--radius-base);
+	background-color: rgb(253 252 250 / 72%);
+	pointer-events: none;
+}
+
+.fetchFailedHint {
+	margin: 0;
+	font-size: var(--font-size-caption);
+	line-height: var(--line-height-caption);
+	color: var(--color-clay);
+}
