@@ -2,6 +2,8 @@ package com.beewax.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -46,6 +48,16 @@ public class OutboundRecord {
 
 	@Column(name = "total_sale_amount", nullable = false, precision = 15, scale = 2)
 	private BigDecimal totalSaleAmount;
+
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 3)
+	private SettlementCurrency currency = SettlementCurrency.CNY;
+
+	@Column(name = "exchange_rate", precision = 10, scale = 4)
+	private BigDecimal exchangeRate;
+
+	@Column(name = "converted_sale_amount", nullable = false, precision = 15, scale = 2)
+	private BigDecimal convertedSaleAmount;
 
 	@Column(name = "weighted_cost", nullable = false, precision = 15, scale = 2)
 	private BigDecimal weightedCost;

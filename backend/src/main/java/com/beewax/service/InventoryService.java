@@ -19,6 +19,7 @@ import com.beewax.entity.OperationLog;
 import com.beewax.entity.OutboundBatchLine;
 import com.beewax.entity.OutboundRecord;
 import com.beewax.entity.Product;
+import com.beewax.entity.SettlementCurrency;
 import com.beewax.entity.Product.ProductStatus;
 import com.beewax.entity.Supplier;
 import com.beewax.entity.User;
@@ -277,7 +278,23 @@ public class InventoryService {
 		inboundRecordRepository.saveAll(lockedRecords);
 
 		BigDecimal totalSaleAmount = totalQty.multiply(saleUnitPrice).setScale(2, RoundingMode.HALF_UP);
-		BigDecimal grossProfit = totalSaleAmount.subtract(weightedCost).setScale(2, RoundingMode.HALF_UP);
+		SettlementCurrency currency = request.getCurrency() != null
+				? request.getCurrency()
+				: SettlementCurrency.CNY;
+		BigDecimal exchangeRate = null;
+		BigDecimal convertedSaleAmount;
+
+		if (currency == SettlementCurrency.USD) {
+			if (request.getExchangeRate() == null) {
+				throw new BusinessException(400, "请填写汇率");
+			}
+			exchangeRate = request.getExchangeRate().setScale(4, RoundingMode.HALF_UP);
+			convertedSaleAmount = totalSaleAmount.multiply(exchangeRate).setScale(2, RoundingMode.HALF_UP);
+		} else {
+			convertedSaleAmount = totalSaleAmount;
+		}
+
+		BigDecimal grossProfit = convertedSaleAmount.subtract(weightedCost).setScale(2, RoundingMode.HALF_UP);
 
 		OutboundRecord outbound = new OutboundRecord();
 		outbound.setProductId(product.getId());
@@ -288,6 +305,9 @@ public class InventoryService {
 		outbound.setUnit(product.getUnit());
 		outbound.setSaleUnitPrice(saleUnitPrice);
 		outbound.setTotalSaleAmount(totalSaleAmount);
+		outbound.setCurrency(currency);
+		outbound.setExchangeRate(exchangeRate);
+		outbound.setConvertedSaleAmount(convertedSaleAmount);
 		outbound.setWeightedCost(weightedCost);
 		outbound.setGrossProfit(grossProfit);
 		outbound.setRemark(trimToNull(request.getRemark()));
@@ -305,7 +325,9 @@ public class InventoryService {
 		return new OutboundCreateResponse(
 				savedOutbound.getId(),
 				totalQty,
+				currency,
 				totalSaleAmount,
+				convertedSaleAmount,
 				weightedCost,
 				grossProfit,
 				null);
@@ -346,6 +368,9 @@ public class InventoryService {
 		snapshot.put("unit", record.getUnit());
 		snapshot.put("saleUnitPrice", record.getSaleUnitPrice());
 		snapshot.put("totalSaleAmount", record.getTotalSaleAmount());
+		snapshot.put("currency", record.getCurrency());
+		snapshot.put("exchangeRate", record.getExchangeRate());
+		snapshot.put("convertedSaleAmount", record.getConvertedSaleAmount());
 		snapshot.put("weightedCost", record.getWeightedCost());
 		snapshot.put("grossProfit", record.getGrossProfit());
 		snapshot.put("remark", record.getRemark());

@@ -88,7 +88,7 @@ _目标：仓管可完整录入入库、出库，老板可查库存和流水_
 - [x] 1.27 数据库：`outbound_records` 新增 `currency` / `exchange_rate` / `converted_sale_amount` 字段；`account_receivables` 新增 `currency` / `exchange_rate` / `converted_amount` 字段
 - [x] 1.28 后端：`ExchangeRateService` 对接第三方汇率数据源（供应商待定），当日结果做缓存，失败降级返回 `success:false` 而非抛异常
 - [x] 1.29 后端：实现 `GET /api/inventory/exchange-rate/cny-usd`
-- [ ] 1.30 后端：扩展 `POST /api/inventory/outbound`，支持 `currency` / `exchangeRate` 入参；`currency=USD` 时服务端二次校验汇率非空；计算 `converted_sale_amount`；`gross_profit` 计算口径切换为基于折算值
+- [x] 1.30 后端：扩展 `POST /api/inventory/outbound`，支持 `currency` / `exchangeRate` 入参；`currency=USD` 时服务端二次校验汇率非空；计算 `converted_sale_amount`；`gross_profit` 计算口径切换为基于折算值
 - [ ] 1.31 后端：应收账款创建逻辑（2.7 任务内）透传出库记录的 `currency` / `exchange_rate`，计算 `converted_amount`（此任务与阶段 2 的 2.7 存在依赖，需协调顺序）
 - [ ] 1.32 后端：`GET /api/dashboard/summary` 与 `GET /api/accounts/receivable` 聚合查询切换到 `converted_*` 字段求和
 - [ ] 1.33 前端：实现 `ExchangeRateInput` 组件（loading / 自动获取失败提示 / 正常可编辑三态）

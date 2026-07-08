@@ -1,0 +1,16 @@
+# Copy to application-dev.yml / application-prod.yml or set as environment variables.
+# Do not commit real secrets.
+
+spring:
+  profiles:
+    active: dev
+
+app:
+  exchange-rate:
+    connect-timeout-ms: 5000
+    read-timeout-ms: 10000
+    # TianAPI (天聚数行) key for GET https://apis.tianapi.com/fxrate/index
+    tianapi-key: ${TIANAPI_EXCHANGE_KEY:your-tianapi-key-here}
+
+jwt:
+  secret: ${JWT_SECRET:change-me}

@@ -14,4 +14,6 @@ public class ExchangeRateProperties {
 	private int connectTimeoutMs = 5000;
 
 	private int readTimeoutMs = 10000;
+
+	private String tianapiKey = "";
 }

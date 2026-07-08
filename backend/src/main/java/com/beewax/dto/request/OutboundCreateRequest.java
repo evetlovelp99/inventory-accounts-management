@@ -1,5 +1,6 @@
 package com.beewax.dto.request;
 
+import com.beewax.entity.SettlementCurrency;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotEmpty;
@@ -23,6 +24,10 @@ public class OutboundCreateRequest {
 
 	@NotNull(message = "出库日期不能为空")
 	private LocalDate outboundDate;
+
+	private SettlementCurrency currency = SettlementCurrency.CNY;
+
+	private BigDecimal exchangeRate;
 
 	@NotNull(message = "销售单价不能为空")
 	@DecimalMin(value = "0", message = "销售单价不能为负")
