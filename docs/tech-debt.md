@@ -289,6 +289,22 @@
 
 ---
 
+## H. 端到端 / 部署验证缺口
+
+### H1. 汇率预填功能未在真实第三方 API 下验证
+
+| 项 | 说明 |
+|----|------|
+| **接口** | `GET /api/inventory/exchange-rate/cny-usd` |
+| **阶段 1 E2E 结论** | 2026-07-08 真实 API 验收：入库、跨批次出库、库存扣减、流水、美元出库手动汇率与 `convertedSaleAmount` 折算均通过；**汇率预填未通过** |
+| **原因** | 本地 dev 环境未配置 `TIANAPI_EXCHANGE_KEY`（`application.yml` → `app.exchange-rate.tianapi-key` 为空），第三方汇率数据源无法调用，接口按设计降级返回 `{ success: false, message: "汇率获取失败，请手动输入" }` |
+| **已验证部分** | 降级行为符合 spec（不抛 500）；USD 出库不传 `exchangeRate` 时服务端返回 400「请填写汇率」；手动传入 `exchangeRate` 后 `convertedSaleAmount` 计算正确 |
+| **未验证部分** | 真实第三方 API 返回 `success: true` 及有效 `rate` 时的预填链路（前端 `ExchangeRateInput` 自动填充） |
+| **风险** | 低–中。生产部署前若未配置 Key，仓管需手动输入汇率，不影响出库保存 |
+| **建议修复时机** | **阶段 5 部署前必须配置真实 API Key 并验证一次** |
+
+---
+
 ## G. 已关闭 / 已验证非问题
 
 | 项 | 结论 |
@@ -312,6 +328,7 @@
 | P2 | B2–B3 | 文件下载 ACL + inspectFileUrl 校验 | 3.2 或 4 前 |
 | P2 | B1 | 上传内容校验 | 4 导入前 |
 | P3 | C3 | 手动创建应收仅 CNY | 按需 |
+| P3 | H1 | 汇率预填未在真实第三方 API 下验证 | 5 部署前 |
 | — | C4–C5 | 已知 MVP 取舍 / Later | Later |
 | — | F1, E3 | 入库 createPayable / JWT prod secret | 已关闭 |
 | — | G | 已修复 / 非问题 | 关闭 |
@@ -326,3 +343,4 @@
 | 2026-07-08 | 对话摘要版：多币种、AccountDetailPage |
 | 2026-07-08 | **代码排查重写**：全 Controller 权限矩阵；新增 B3、C2–C3、E3、F1；前端 15 页逐条核对；金额 SQL 全量对照；AccountDetailPage 标记已关闭 |
 | 2026-07-08 | 关闭 F1（入库 createPayable）、E3（生产 JWT_SECRET 强制） |
+| 2026-07-08 | 新增 H1：阶段 1 E2E 验收后记录汇率预填未在真实 API 下验证 |
