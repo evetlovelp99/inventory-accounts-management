@@ -77,6 +77,34 @@ export interface PayableDetailResult {
 	records: PayableRecord[];
 }
 
+export interface PayableSummaryItem {
+	supplierId: number;
+	supplierName: string;
+	originalAmount: number;
+	paidAmount: number;
+	remainingAmount: number;
+	oldestUnpaidDate: string;
+	daysSinceOldest: number;
+	status: PayableStatus;
+}
+
+export interface PayableListResult {
+	totalUnpaidAmount: number;
+	list: PayableSummaryItem[];
+	total: number;
+}
+
+export interface PayablePaymentPayload {
+	amount: number;
+	paymentDate: string;
+	remark?: string;
+}
+
+export interface PayablePaymentResult {
+	remainingAmount: number;
+	status: PayableStatus;
+}
+
 export function getAccountsErrorMessage(error: unknown): string {
 	if (axios.isAxiosError(error)) {
 		const message = (error.response?.data as { message?: string } | undefined)?.message;
@@ -140,6 +168,23 @@ export async function registerReceivablePayment(
 	return response.data.data;
 }
 
+export async function listPayables(params: {
+	keyword?: string;
+	status?: PayableStatus;
+	page?: number;
+	size?: number;
+} = {}): Promise<PayableListResult> {
+	const response = await apiClient.get<ApiResponse<PayableListResult>>('/accounts/payable', {
+		params,
+	});
+
+	if (response.data.code !== 200) {
+		throw new Error(response.data.message);
+	}
+
+	return response.data.data;
+}
+
 export async function getPayableDetail(
 	supplierId: number,
 	params: { startDate?: string; endDate?: string } = {},
@@ -147,6 +192,22 @@ export async function getPayableDetail(
 	const response = await apiClient.get<ApiResponse<PayableDetailResult>>(
 		'/accounts/payable/detail',
 		{ params: { supplierId, ...params } },
+	);
+
+	if (response.data.code !== 200) {
+		throw new Error(response.data.message);
+	}
+
+	return response.data.data;
+}
+
+export async function registerPayablePayment(
+	id: number,
+	payload: PayablePaymentPayload,
+): Promise<PayablePaymentResult> {
+	const response = await apiClient.post<ApiResponse<PayablePaymentResult>>(
+		`/accounts/payable/${id}/payment`,
+		payload,
 	);
 
 	if (response.data.code !== 200) {

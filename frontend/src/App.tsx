@@ -10,6 +10,7 @@ import LoginPage from './pages/Login/LoginPage';
 import CustomersPage from './pages/Settings/CustomersPage';
 import ProductsPage from './pages/Settings/ProductsPage';
 import SuppliersPage from './pages/Settings/SuppliersPage';
+import PayablePage from './pages/Accounts/PayablePage';
 import ReceivablePage from './pages/Accounts/ReceivablePage';
 import AccountDetailPage from './pages/Accounts/AccountDetailPage';
 import ProtectedRoute from './routes/ProtectedRoute';
@@ -37,6 +38,7 @@ const IMPLEMENTED_PATHS = new Set([
 	'/inventory/outbound',
 	'/inventory/stock',
 	'/accounts/receivable',
+	'/accounts/payable',
 ]);
 
 export default function App() {
@@ -58,6 +60,7 @@ export default function App() {
 							element={<ProductLedgerPage />}
 						/>
 						<Route path="/accounts/receivable" element={<ReceivablePage />} />
+						<Route path="/accounts/payable" element={<PayablePage />} />
 						<Route path="/accounts/:type/:partyId" element={<AccountDetailPage />} />
 						{NAV_ITEMS.filter((item) => !IMPLEMENTED_PATHS.has(item.path)).map((item) => (
 							<Route

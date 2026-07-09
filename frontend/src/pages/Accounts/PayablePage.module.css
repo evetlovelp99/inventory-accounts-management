@@ -1,0 +1,15 @@
+.statGrid {
+	display: grid;
+	grid-template-columns: minmax(240px, 320px);
+	align-items: stretch;
+	margin-bottom: 24px;
+}
+
+.toolbarRow {
+	margin-bottom: 16px;
+}
+
+.actions {
+	display: inline-flex;
+	align-items: center;
+}

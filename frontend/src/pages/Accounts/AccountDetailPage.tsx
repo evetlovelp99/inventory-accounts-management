@@ -151,7 +151,9 @@ export default function AccountDetailPage() {
 	const [rows, setRows] = useState<AccountRecordRow[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
-	const [paymentRecord, setPaymentRecord] = useState<ReceivableRecord | null>(null);
+	const [paymentRecord, setPaymentRecord] = useState<ReceivableRecord | PayableRecord | null>(
+		null,
+	);
 
 	const currency = locationState.currency ?? 'CNY';
 	const isReceivable = accountType === 'receivable';
@@ -223,17 +225,31 @@ export default function AccountDetailPage() {
 		setActiveFilters([]);
 	};
 
+	const paymentActionLabel = isReceivable ? '登记还款' : '登记付款';
+
 	const handleOpenPayment = (row: AccountRecordRow) => {
-		setPaymentRecord({
+		const baseRecord = {
 			id: row.id,
 			originalAmount: row.originalAmount,
 			paidAmount: row.paidAmount,
 			remainingAmount: row.remainingAmount,
 			occurDate: row.occurDate,
 			status: row.status,
-			outboundId: row.relatedId,
 			remark: row.remark,
 			paymentLogs: row.paymentLogs,
+		};
+
+		if (isReceivable) {
+			setPaymentRecord({
+				...baseRecord,
+				outboundId: row.relatedId,
+			});
+			return;
+		}
+
+		setPaymentRecord({
+			...baseRecord,
+			inboundId: row.relatedId,
 		});
 	};
 
@@ -270,7 +286,7 @@ export default function AccountDetailPage() {
 			),
 		},
 		{
-			title: '剩余欠款',
+			title: isReceivable ? '剩余欠款' : '剩余应付',
 			dataIndex: 'remainingAmount',
 			key: 'remainingAmount',
 			width: 130,
@@ -304,27 +320,25 @@ export default function AccountDetailPage() {
 		},
 	];
 
-	if (isReceivable) {
-		columns.push({
-			title: '操作',
-			key: 'actions',
-			width: 110,
-			render: (_, row) =>
-				row.status === 'PAID' ? (
-					'—'
-				) : (
-					<div
-						className={styles.actions}
-						onClick={(event) => event.stopPropagation()}
-						onKeyDown={(event) => event.stopPropagation()}
-					>
-						<Button variant="link" size="compact" onClick={() => handleOpenPayment(row)}>
-							登记还款
-						</Button>
-					</div>
-				),
-		});
-	}
+	columns.push({
+		title: '操作',
+		key: 'actions',
+		width: 110,
+		render: (_, row) =>
+			row.status === 'PAID' ? (
+				'—'
+			) : (
+				<div
+					className={styles.actions}
+					onClick={(event) => event.stopPropagation()}
+					onKeyDown={(event) => event.stopPropagation()}
+				>
+					<Button variant="link" size="compact" onClick={() => handleOpenPayment(row)}>
+						{paymentActionLabel}
+					</Button>
+				</div>
+			),
+	});
 
 	if (!accountType || !Number.isFinite(partyId) || partyId <= 0) {
 		return (
@@ -383,16 +397,15 @@ export default function AccountDetailPage() {
 				}}
 			/>
 
-			{isReceivable ? (
-				<PaymentModal
-					open={paymentRecord !== null}
-					customerName={partyName}
-					currency={currency}
-					records={paymentRecord ? [paymentRecord] : []}
-					onCancel={() => setPaymentRecord(null)}
-					onSuccess={loadDetail}
-				/>
-			) : null}
+			<PaymentModal
+				open={paymentRecord !== null}
+				accountType={accountType ?? 'receivable'}
+				customerName={partyName}
+				currency={currency}
+				records={paymentRecord ? [paymentRecord] : []}
+				onCancel={() => setPaymentRecord(null)}
+				onSuccess={loadDetail}
+			/>
 		</div>
 	);
 }
