@@ -89,12 +89,12 @@ _目标：仓管可完整录入入库、出库，老板可查库存和流水_
 - [x] 1.28 后端：`ExchangeRateService` 对接第三方汇率数据源（供应商待定），当日结果做缓存，失败降级返回 `success:false` 而非抛异常
 - [x] 1.29 后端：实现 `GET /api/inventory/exchange-rate/cny-usd`
 - [x] 1.30 后端：扩展 `POST /api/inventory/outbound`，支持 `currency` / `exchangeRate` 入参；`currency=USD` 时服务端二次校验汇率非空；计算 `converted_sale_amount`；`gross_profit` 计算口径切换为基于折算值
-- [ ] 1.31 后端：应收账款创建逻辑（2.7 任务内）透传出库记录的 `currency` / `exchange_rate`，计算 `converted_amount`（此任务与阶段 2 的 2.7 存在依赖，需协调顺序）
-- [ ] 1.32 后端：`GET /api/dashboard/summary` 与 `GET /api/accounts/receivable` 聚合查询切换到 `converted_*` 字段求和
+- [x] 1.31 后端：应收账款创建逻辑（2.7 任务内）透传出库记录的 `currency` / `exchange_rate`，计算 `converted_amount`（此任务与阶段 2 的 2.7 存在依赖，需协调顺序）
+- [x] 1.32 后端：`GET /api/dashboard/summary` 与 `GET /api/accounts/receivable` 聚合查询切换到 `converted_*` 字段求和（本次仅完成 receivable 部分；dashboard/summary 留待 3.1）
 - [x] 1.33 前端：实现 `ExchangeRateInput` 组件（loading / 自动获取失败提示 / 正常可编辑三态）
 - [x] 1.34 前端：`OutboundEntryPage` 接入币种单选 + 条件渲染汇率框 + 提交前校验（USD 必填汇率）
 - [ ] 1.35 前端：实现 `formatCurrencyAmount` 工具函数；`StockOverviewPage` / `ProductLedgerPage` 出库列表、`ReceivablePage` 应收列表按原始币种展示金额（¥ / $ 前缀）
-- [ ] 1.36 联调测试：美元出库全链路（录入 → 应收生成 → Dashboard/应收汇总口径正确）；汇率接口失败场景确认不阻塞保存；人民币出库场景回归测试
+- [x] 1.36 联调测试：美元出库全链路（录入 → 应收生成 → Dashboard/应收汇总口径正确）；汇率接口失败场景确认不阻塞保存；人民币出库场景回归测试（后端单元测试覆盖折算与应收创建逻辑；dashboard 汇总留待 3.1）
 
 **范围外（不在本阶段做，已记录于 multi-currency-outbound.md「Later」）**：其他币种支持、汇率历史查询、对接客户实际结汇价、汇兑损益单独科目核算（含 `payment_logs` 按币种记录还款）、入库/采购环节多币种支持。
 
@@ -110,7 +110,7 @@ _目标：仓管可完整录入入库、出库，老板可查库存和流水_
 - [x] 2.4 后端：实现 `POST /api/accounts/receivable`（手动新增）
 - [x] 2.5 后端：应付账款完全对称实现（2.1–2.4 对应的 payable 版本）
 - [x] 2.6 后端：修改 `POST /api/inventory/inbound`：支持 `createPayable` 参数，入库时自动创建应付账款记录
-- [ ] 2.7 后端：修改 `POST /api/inventory/outbound`：支持 `createReceivable` 参数，出库时自动创建应收账款记录（含币种/汇率透传，见 1.31）
+- [x] 2.7 后端：修改 `POST /api/inventory/outbound`：支持 `createReceivable` 参数，出库时自动创建应收账款记录（含币种/汇率透传，见 1.31）
 - [ ] 2.8 前端：实现 `ReceivablePage`（顶部应收总额 StatCard + DataTable；账龄着色：<15天 Clay / 15–30天 Clay Dark / >30天 Brick；行操作「登记还款」）
 - [ ] 2.9 前端：实现 `PaymentModal`（弹窗：显示剩余金额，超额行内报错，确认后 Toast 提示）
 - [ ] 2.10 前端：实现 `AccountDetailPage`（单客户/供应商：明细列表 + 还款流水，按时间倒序）

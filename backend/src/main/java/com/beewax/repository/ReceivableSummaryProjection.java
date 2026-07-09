@@ -9,7 +9,11 @@ public interface ReceivableSummaryProjection {
 
 	String getCustomerName();
 
+	String getCurrency();
+
 	BigDecimal getOriginalAmount();
+
+	BigDecimal getConvertedAmount();
 
 	BigDecimal getPaidAmount();
 

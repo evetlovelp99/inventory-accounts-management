@@ -25,8 +25,10 @@ import com.beewax.entity.AccountReceivable.ReceivableStatus;
 import com.beewax.entity.Customer;
 import com.beewax.entity.Customer.CustomerStatus;
 import com.beewax.entity.OperationLog;
+import com.beewax.entity.OutboundRecord;
 import com.beewax.entity.PaymentLog;
 import com.beewax.entity.PaymentLog.AccountType;
+import com.beewax.entity.SettlementCurrency;
 import com.beewax.entity.Supplier;
 import com.beewax.entity.Supplier.SupplierStatus;
 import com.beewax.entity.User;
@@ -42,6 +44,7 @@ import com.beewax.repository.PaymentLogRepository;
 import com.beewax.repository.ReceivableSummaryProjection;
 import com.beewax.repository.SupplierRepository;
 import com.beewax.repository.UserRepository;
+import com.beewax.util.SettlementAmountCalculator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.Page;
@@ -150,23 +153,74 @@ public class AccountService {
 				.orElseThrow(() -> new BusinessException(401, "未登录或 token 过期"));
 
 		BigDecimal originalAmount = request.getOriginalAmount();
-		AccountReceivable record = new AccountReceivable();
-		record.setCustomerId(customer.getId());
-		record.setCustomerName(customer.getName());
-		record.setOutboundId(request.getOutboundId());
-		record.setOriginalAmount(originalAmount);
-		record.setPaidAmount(BigDecimal.ZERO);
-		record.setRemainingAmount(originalAmount);
-		record.setOccurDate(request.getOccurDate());
-		record.setStatus(ReceivableStatus.UNPAID);
-		record.setRemark(trimToNull(request.getRemark()));
-		record.setCreatedBy(operator.getId());
-		record.setImported(false);
+		SettlementCurrency currency = SettlementCurrency.CNY;
+		BigDecimal convertedAmount = SettlementAmountCalculator.calculateConvertedAmount(
+				currency, originalAmount, null);
 
-		AccountReceivable saved = accountReceivableRepository.save(record);
+		AccountReceivable saved = persistReceivable(
+				customer.getId(),
+				customer.getName(),
+				request.getOutboundId(),
+				originalAmount,
+				currency,
+				null,
+				convertedAmount,
+				request.getOccurDate(),
+				trimToNull(request.getRemark()),
+				operator);
 		saveReceivableCreateOperationLog(operator, saved);
 
 		return new ReceivableCreateResponse(saved.getId());
+	}
+
+	@Transactional
+	public Long createReceivableFromOutbound(OutboundRecord outbound, User operator, String remark) {
+		SettlementCurrency currency = outbound.getCurrency() != null
+				? outbound.getCurrency()
+				: SettlementCurrency.CNY;
+
+		AccountReceivable saved = persistReceivable(
+				outbound.getCustomerId(),
+				outbound.getCustomerName(),
+				outbound.getId(),
+				outbound.getTotalSaleAmount(),
+				currency,
+				outbound.getExchangeRate(),
+				outbound.getConvertedSaleAmount(),
+				outbound.getOutboundDate(),
+				trimToNull(remark),
+				operator);
+		saveReceivableCreateOperationLog(operator, saved);
+		return saved.getId();
+	}
+
+	private AccountReceivable persistReceivable(
+			Long customerId,
+			String customerName,
+			Long outboundId,
+			BigDecimal originalAmount,
+			SettlementCurrency currency,
+			BigDecimal exchangeRate,
+			BigDecimal convertedAmount,
+			LocalDate occurDate,
+			String remark,
+			User operator) {
+		AccountReceivable record = new AccountReceivable();
+		record.setCustomerId(customerId);
+		record.setCustomerName(customerName);
+		record.setOutboundId(outboundId);
+		record.setOriginalAmount(originalAmount);
+		record.setCurrency(currency);
+		record.setExchangeRate(exchangeRate);
+		record.setConvertedAmount(convertedAmount);
+		record.setPaidAmount(BigDecimal.ZERO);
+		record.setRemainingAmount(originalAmount);
+		record.setOccurDate(occurDate);
+		record.setStatus(ReceivableStatus.UNPAID);
+		record.setRemark(remark);
+		record.setCreatedBy(operator.getId());
+		record.setImported(false);
+		return accountReceivableRepository.save(record);
 	}
 
 	@Transactional
@@ -433,6 +487,9 @@ public class AccountService {
 		snapshot.put("customerId", record.getCustomerId());
 		snapshot.put("customerName", record.getCustomerName());
 		snapshot.put("originalAmount", record.getOriginalAmount());
+		snapshot.put("currency", record.getCurrency());
+		snapshot.put("exchangeRate", record.getExchangeRate());
+		snapshot.put("convertedAmount", record.getConvertedAmount());
 		snapshot.put("paidAmount", record.getPaidAmount());
 		snapshot.put("remainingAmount", record.getRemainingAmount());
 		snapshot.put("occurDate", record.getOccurDate().toString());
@@ -515,10 +572,15 @@ public class AccountService {
 	}
 
 	private ReceivableSummaryItemResponse toSummaryItem(ReceivableSummaryProjection row) {
+		SettlementCurrency currency = row.getCurrency() != null
+				? SettlementCurrency.valueOf(row.getCurrency())
+				: SettlementCurrency.CNY;
 		return new ReceivableSummaryItemResponse(
 				row.getCustomerId(),
 				row.getCustomerName(),
+				currency,
 				row.getOriginalAmount(),
+				row.getConvertedAmount(),
 				row.getPaidAmount(),
 				row.getRemainingAmount(),
 				row.getOldestUnpaidDate(),

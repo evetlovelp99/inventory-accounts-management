@@ -17,7 +17,9 @@ public interface AccountReceivableRepository extends JpaRepository<AccountReceiv
 			SELECT
 			  MAX(ar.customer_id) AS customerId,
 			  ar.customer_name AS customerName,
+			  MAX(ar.currency) AS currency,
 			  SUM(ar.original_amount) AS originalAmount,
+			  SUM(ar.remaining_amount * COALESCE(ar.exchange_rate, 1)) AS convertedAmount,
 			  SUM(ar.paid_amount) AS paidAmount,
 			  SUM(ar.remaining_amount) AS remainingAmount,
 			  MIN(CASE WHEN ar.remaining_amount > 0 THEN ar.occur_date END) AS oldestUnpaidDate,
@@ -58,7 +60,7 @@ public interface AccountReceivableRepository extends JpaRepository<AccountReceiv
 			Pageable pageable);
 
 	@Query(value = """
-			SELECT COALESCE(SUM(ar.remaining_amount), 0)
+			SELECT COALESCE(SUM(ar.remaining_amount * COALESCE(ar.exchange_rate, 1)), 0)
 			FROM account_receivables ar
 			WHERE (:keyword IS NULL OR :keyword = '' OR ar.customer_name LIKE CONCAT('%', :keyword, '%'))
 			  AND (

@@ -35,6 +35,7 @@ import com.beewax.repository.ProductLedgerEntryProjection;
 import com.beewax.repository.StockOverviewProjection;
 import com.beewax.repository.SupplierRepository;
 import com.beewax.repository.UserRepository;
+import com.beewax.util.SettlementAmountCalculator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.dao.PessimisticLockingFailureException;
@@ -75,6 +76,7 @@ public class InventoryService {
 	private final SupplierRepository supplierRepository;
 	private final CustomerRepository customerRepository;
 	private final UserRepository userRepository;
+	private final AccountService accountService;
 	private final ObjectMapper objectMapper;
 
 	public InventoryService(
@@ -87,6 +89,7 @@ public class InventoryService {
 			SupplierRepository supplierRepository,
 			CustomerRepository customerRepository,
 			UserRepository userRepository,
+			AccountService accountService,
 			ObjectMapper objectMapper) {
 		this.inboundRecordRepository = inboundRecordRepository;
 		this.outboundRecordRepository = outboundRecordRepository;
@@ -97,6 +100,7 @@ public class InventoryService {
 		this.supplierRepository = supplierRepository;
 		this.customerRepository = customerRepository;
 		this.userRepository = userRepository;
+		this.accountService = accountService;
 		this.objectMapper = objectMapper;
 	}
 
@@ -289,10 +293,9 @@ public class InventoryService {
 				throw new BusinessException(400, "请填写汇率");
 			}
 			exchangeRate = request.getExchangeRate().setScale(4, RoundingMode.HALF_UP);
-			convertedSaleAmount = totalSaleAmount.multiply(exchangeRate).setScale(2, RoundingMode.HALF_UP);
-		} else {
-			convertedSaleAmount = totalSaleAmount;
 		}
+		convertedSaleAmount = SettlementAmountCalculator.calculateConvertedAmount(
+				currency, totalSaleAmount, exchangeRate);
 
 		BigDecimal grossProfit = convertedSaleAmount.subtract(weightedCost).setScale(2, RoundingMode.HALF_UP);
 
@@ -322,6 +325,12 @@ public class InventoryService {
 
 		saveOutboundOperationLog(operator, savedOutbound, batchLines);
 
+		Long receivableId = null;
+		if (Boolean.TRUE.equals(request.getCreateReceivable())) {
+			receivableId = accountService.createReceivableFromOutbound(
+					savedOutbound, operator, request.getRemark());
+		}
+
 		return new OutboundCreateResponse(
 				savedOutbound.getId(),
 				totalQty,
@@ -330,7 +339,7 @@ public class InventoryService {
 				convertedSaleAmount,
 				weightedCost,
 				grossProfit,
-				null);
+				receivableId);
 	}
 
 	private void saveOperationLog(User operator, InboundRecord record) {

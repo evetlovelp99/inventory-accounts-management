@@ -37,6 +37,16 @@ public class AccountReceivable {
 	@Column(name = "original_amount", nullable = false, precision = 15, scale = 2)
 	private BigDecimal originalAmount;
 
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 3)
+	private SettlementCurrency currency = SettlementCurrency.CNY;
+
+	@Column(name = "exchange_rate", precision = 10, scale = 4)
+	private BigDecimal exchangeRate;
+
+	@Column(name = "converted_amount", nullable = false, precision = 15, scale = 2)
+	private BigDecimal convertedAmount;
+
 	@Column(name = "paid_amount", nullable = false, precision = 15, scale = 2)
 	private BigDecimal paidAmount;
 
