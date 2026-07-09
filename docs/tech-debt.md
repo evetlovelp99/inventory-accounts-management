@@ -249,7 +249,7 @@
 |------|----------|------|
 | `users.password_hash` | bcrypt（`AuthService` + `BCryptPasswordEncoder`；`V2__seed_roles.sql` 为哈希） | ✅ 符合要求 |
 | JWT | **不落库**；`JwtUtil` 签发无状态 token | ✅ |
-| JWT 密钥 | `application.yml` 默认 `dev-only-change-me-...`；`application-prod.yml` 依赖 `${JWT_SECRET}` 环境变量 | ⚠️ **部署债**：生产未设 env 时仍可能用 dev 默认值（见 E3） |
+| JWT 密钥 | dev：`application.yml` 默认值；prod：`application-prod.yml` 强制 `${JWT_SECRET}` + `JwtProductionSecretValidator` | ✅ prod 已强制（E3 已关闭） |
 | 前端 token | `localStorage`（`authStore.ts`） | ⚠️ 标准 SPA 做法；XSS 可窃取 token（无 HttpOnly cookie）— **低优先级**，阶段 5 安全走查时可评估 |
 
 ### E2. 关键写操作事务覆盖
@@ -258,34 +258,34 @@
 |------|------|----------------|------|
 | 入库 | `InventoryService.createInbound` | ✅ | 单表写入 + 操作日志同事务 |
 | 出库 + 应收 | `createOutbound` → `createReceivableFromOutbound` | ✅ 均为 `@Transactional`，默认传播合并 | ✅ |
-| 入库 + 应付 | `createInbound` 应调 `createPayableFromInbound` | — | ❌ **未实现**（见 F1） |
+| 入库 + 应付 | `createInbound` → `createPayableFromInbound` | ✅ 均为 `@Transactional`，默认传播合并 | ✅（F1 已关闭） |
 | 登记应收/应付款 | `registerReceivablePayment` / `registerPayablePayment` | ✅ | 更新账款 + `payment_logs` + `operation_log` 同事务 |
 | 产品/客户/供应商 CRUD | 各 `*Service` 写方法 | ✅ | ✅ |
 | 文件上传 | `FileStorageService.storeInspectReport` | ❌ | 单文件写入，无 DB 同事务；失败时可能留 orphan 文件 — **低** |
 
 **删除 / 修改历史金额**：全仓库 **无** `delete` 相关 Java 代码；无入库/出库 UPDATE API。`user_flow.md`「修改历史记录」尚未实现，不属于当前事务缺口。
 
-### E3. 【新增】生产 JWT 密钥依赖环境变量但未强制
+### E3. 生产 JWT 密钥强制
+
+| 状态 | **已修复** — 不再作为开放技术债。 |
 
 | 项 | 说明 |
 |----|------|
-| **位置** | `application.yml` → `jwt.secret: ${JWT_SECRET:dev-only-change-me-...}` |
-| **风险** | 生产部署若未注入 `JWT_SECRET`，使用可预测的 dev 默认值 |
-| **建议修复时机** | **阶段 0.20 部署 / 阶段 5 上线前** 强制校验 |
+| **修复** | `application-prod.yml` 使用 `jwt.secret: ${JWT_SECRET}`（无默认值）；`JwtProductionSecretValidator`（`@Profile("prod")`）在 secret 为空时拒绝启动 |
 
 ---
 
-## F. 功能实现缺口（代码排查新发现）
+## F. 功能实现缺口
 
-### F1. 【新增】入库 `createPayable` 未接线（implementation_plan 2.6 与代码不符）
+### F1. 入库 `createPayable` 未接线
+
+| 状态 | **已修复** — 不再作为开放技术债。 |
 
 | 项 | 说明 |
 |----|------|
-| **文档/ DTO** | `InboundCreateRequest.createPayable` 存在；`InboundCreateResponse.payableId` 存在；`tech/api.md` 描述 `createPayable: true` |
-| **代码** | `InventoryService.createInbound` **从未读取** `createPayable`，始终 `return new InboundCreateResponse(..., null)`；无 `createPayableFromInbound` 方法 |
-| **前端** | `InboundEntryPage` **无**「货款未付」勾选（对比 `OutboundEntryPage.createReceivable`） |
-| **影响** | 入库无法自动生成应付；与产品流程「入库勾选该批货款未付」不符 |
-| **建议修复时机** | **应尽快修复**（阶段 2 验收范围）；属功能债，可与权限分开 PR |
+| **原问题** | `createPayable` DTO 存在但 `InventoryService.createInbound` 未读取；无 `createPayableFromInbound` |
+| **修复** | `AccountService.createPayableFromInbound`；`InventoryService` 接线；`InboundEntryPage`「该批货款未付」勾选 |
+| **说明** | `implementation_plan.md` 2.6 此前误标完成，2026-07-08 补全 |
 
 ---
 
@@ -294,6 +294,8 @@
 | 项 | 结论 |
 |----|------|
 | AccountDetailPage 应付「登记付款」 | **已修复**（2.11，`33f97ac`） |
+| 入库 createPayable 自动创建应付（F1） | **已修复**（`createPayableFromInbound` + 入库页勾选） |
+| 生产 JWT_SECRET 强制（E3） | **已修复**（`application-prod.yml` + `JwtProductionSecretValidator`） |
 | 下载路径穿越 | **已缓解**（`FileStorageService.loadInspectReport` 文件名规范化 + 目录边界检查） |
 | 上传路径穿越 | **已缓解**（存储名 UUID，不用用户输入路径） |
 | 应付账款多币种混用 | **不适用**（应付仅 CNY） |
@@ -305,14 +307,13 @@
 | 优先级 | ID | 摘要 | 建议阶段 |
 |--------|-----|------|----------|
 | P0 | A | 全部 API 无 `@PreAuthorize` | 3.2 + 3.5/3.6 |
-| P0 | F1 | 入库 createPayable 未实现 | 立即 / 阶段 2 补验收 |
 | P1 | C1–C2 | 同客户多币种应收展示 | 3.1 前 |
 | P1 | D | 前端角色越权（见逐页表） | 3.5/3.6 |
 | P2 | B2–B3 | 文件下载 ACL + inspectFileUrl 校验 | 3.2 或 4 前 |
 | P2 | B1 | 上传内容校验 | 4 导入前 |
 | P3 | C3 | 手动创建应收仅 CNY | 按需 |
-| P3 | E3 | 生产 JWT_SECRET 强制 | 部署 / 5 |
 | — | C4–C5 | 已知 MVP 取舍 / Later | Later |
+| — | F1, E3 | 入库 createPayable / JWT prod secret | 已关闭 |
 | — | G | 已修复 / 非问题 | 关闭 |
 
 ---
@@ -324,3 +325,4 @@
 | 2026-07-05 | 初版：检测报告上传/下载（条目 1、2） |
 | 2026-07-08 | 对话摘要版：多币种、AccountDetailPage |
 | 2026-07-08 | **代码排查重写**：全 Controller 权限矩阵；新增 B3、C2–C3、E3、F1；前端 15 页逐条核对；金额 SQL 全量对照；AccountDetailPage 标记已关闭 |
+| 2026-07-08 | 关闭 F1（入库 createPayable）、E3（生产 JWT_SECRET 强制） |

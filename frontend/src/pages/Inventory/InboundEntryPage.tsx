@@ -1,4 +1,4 @@
-import { Button, Collapse, DatePicker, Form, Input, InputNumber, Select, Upload } from 'antd';
+import { Button, Checkbox, Collapse, DatePicker, Form, Input, InputNumber, Select, Upload } from 'antd';
 import type { UploadFile } from 'antd/es/upload/interface';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
@@ -26,6 +26,7 @@ interface InboundFormValues {
 	quantity: number;
 	unitPrice: number;
 	remark?: string;
+	createPayable?: boolean;
 	originPlace?: string;
 	harvestDate?: Dayjs;
 	inspectNo?: string;
@@ -163,6 +164,7 @@ export default function InboundEntryPage() {
 				inspectDate: formatDateValue(formValues.inspectDate),
 				inspectFileUrl: formValues.inspectFileUrl || undefined,
 				expiryDate: formatDateValue(formValues.expiryDate),
+				createPayable: formValues.createPayable,
 			});
 			showToast('入库记录已保存', 'success');
 			navigate('/inventory/stock');
@@ -263,6 +265,10 @@ export default function InboundEntryPage() {
 			</div>
 
 			<InboundTotalDisplay />
+
+			<Form.Item name="createPayable" valuePropName="checked" initialValue={false}>
+				<Checkbox>该批货款未付</Checkbox>
+			</Form.Item>
 
 			<Form.Item label="备注" name="remark">
 				<Input.TextArea placeholder="选填" rows={3} />

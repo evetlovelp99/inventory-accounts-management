@@ -24,6 +24,7 @@ import com.beewax.entity.AccountReceivable;
 import com.beewax.entity.AccountReceivable.ReceivableStatus;
 import com.beewax.entity.Customer;
 import com.beewax.entity.Customer.CustomerStatus;
+import com.beewax.entity.InboundRecord;
 import com.beewax.entity.OperationLog;
 import com.beewax.entity.OutboundRecord;
 import com.beewax.entity.PaymentLog;
@@ -194,6 +195,20 @@ public class AccountService {
 		return saved.getId();
 	}
 
+	@Transactional
+	public Long createPayableFromInbound(InboundRecord inbound, User operator, String remark) {
+		AccountPayable saved = persistPayable(
+				inbound.getSupplierId(),
+				inbound.getSupplierName(),
+				inbound.getId(),
+				inbound.getTotalAmount(),
+				inbound.getInboundDate(),
+				trimToNull(remark),
+				operator);
+		savePayableCreateOperationLog(operator, saved);
+		return saved.getId();
+	}
+
 	private AccountReceivable persistReceivable(
 			Long customerId,
 			String customerName,
@@ -322,24 +337,40 @@ public class AccountService {
 		User operator = userRepository.findById(getCurrentUser().userId())
 				.orElseThrow(() -> new BusinessException(401, "未登录或 token 过期"));
 
-		BigDecimal originalAmount = request.getOriginalAmount();
-		AccountPayable record = new AccountPayable();
-		record.setSupplierId(supplier.getId());
-		record.setSupplierName(supplier.getName());
-		record.setInboundId(request.getInboundId());
-		record.setOriginalAmount(originalAmount);
-		record.setPaidAmount(BigDecimal.ZERO);
-		record.setRemainingAmount(originalAmount);
-		record.setOccurDate(request.getOccurDate());
-		record.setStatus(PayableStatus.UNPAID);
-		record.setRemark(trimToNull(request.getRemark()));
-		record.setCreatedBy(operator.getId());
-		record.setImported(false);
-
-		AccountPayable saved = accountPayableRepository.save(record);
+		AccountPayable saved = persistPayable(
+				supplier.getId(),
+				supplier.getName(),
+				request.getInboundId(),
+				request.getOriginalAmount(),
+				request.getOccurDate(),
+				trimToNull(request.getRemark()),
+				operator);
 		savePayableCreateOperationLog(operator, saved);
 
 		return new PayableCreateResponse(saved.getId());
+	}
+
+	private AccountPayable persistPayable(
+			Long supplierId,
+			String supplierName,
+			Long inboundId,
+			BigDecimal originalAmount,
+			LocalDate occurDate,
+			String remark,
+			User operator) {
+		AccountPayable record = new AccountPayable();
+		record.setSupplierId(supplierId);
+		record.setSupplierName(supplierName);
+		record.setInboundId(inboundId);
+		record.setOriginalAmount(originalAmount);
+		record.setPaidAmount(BigDecimal.ZERO);
+		record.setRemainingAmount(originalAmount);
+		record.setOccurDate(occurDate);
+		record.setStatus(PayableStatus.UNPAID);
+		record.setRemark(remark);
+		record.setCreatedBy(operator.getId());
+		record.setImported(false);
+		return accountPayableRepository.save(record);
 	}
 
 	@Transactional

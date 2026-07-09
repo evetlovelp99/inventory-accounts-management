@@ -109,7 +109,7 @@ _目标：仓管可完整录入入库、出库，老板可查库存和流水_
 - [x] 2.3 后端：实现 `POST /api/accounts/receivable/{id}/payment`（超额校验，更新 paid_amount / remaining_amount / status，插入 payment_log）
 - [x] 2.4 后端：实现 `POST /api/accounts/receivable`（手动新增）
 - [x] 2.5 后端：应付账款完全对称实现（2.1–2.4 对应的 payable 版本）
-- [x] 2.6 后端：修改 `POST /api/inventory/inbound`：支持 `createPayable` 参数，入库时自动创建应付账款记录
+- [x] 2.6 后端：修改 `POST /api/inventory/inbound`：支持 `createPayable` 参数，入库时自动创建应付账款记录（注：2026-07-08 前 DTO 已存在但未接线，同日补全 `createPayableFromInbound`）
 - [x] 2.7 后端：修改 `POST /api/inventory/outbound`：支持 `createReceivable` 参数，出库时自动创建应收账款记录（含币种/汇率透传，见 1.31）
 - [x] 2.8 前端：实现 `ReceivablePage`（顶部应收总额 StatCard + DataTable；账龄着色：<15天 Clay / 15–30天 Clay Dark / >30天 Brick；行操作「登记还款」）
 - [x] 2.9 前端：实现 `PaymentModal`（弹窗：显示剩余金额，超额行内报错，确认后 Toast 提示）

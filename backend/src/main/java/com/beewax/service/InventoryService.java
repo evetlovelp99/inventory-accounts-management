@@ -147,7 +147,12 @@ public class InventoryService {
 		InboundRecord saved = inboundRecordRepository.save(record);
 		saveOperationLog(operator, saved);
 
-		return new InboundCreateResponse(saved.getId(), totalAmount, null);
+		Long payableId = null;
+		if (Boolean.TRUE.equals(request.getCreatePayable())) {
+			payableId = accountService.createPayableFromInbound(saved, operator, request.getRemark());
+		}
+
+		return new InboundCreateResponse(saved.getId(), totalAmount, payableId);
 	}
 
 	public List<InboundBatchResponse> listInboundBatches(Long productId) {

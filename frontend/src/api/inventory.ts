@@ -20,6 +20,7 @@ export interface InboundCreatePayload {
 	quantity: number;
 	unitPrice: number;
 	remark?: string;
+	createPayable?: boolean;
 	originPlace?: string;
 	harvestDate?: string;
 	inspectNo?: string;
