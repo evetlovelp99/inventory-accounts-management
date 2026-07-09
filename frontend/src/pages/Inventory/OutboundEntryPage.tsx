@@ -1,17 +1,20 @@
-import { Checkbox, DatePicker, Form, Input, InputNumber, Select } from 'antd';
+import { Checkbox, DatePicker, Form, Input, InputNumber, Radio, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
 	createOutbound,
+	getCnyUsdExchangeRate,
 	getInventoryErrorMessage,
 	listInboundBatches,
 	listStock,
+	type SettlementCurrency,
 	type StockItem,
 } from '../../api/inventory';
 import { listCustomers, type Customer } from '../../api/settings';
 import BatchRow from '../../components/EntryForm/BatchRow';
 import type { BatchRowValue, InboundBatch } from '../../components/EntryForm/batchTypes';
+import ExchangeRateInput from '../../components/EntryForm/ExchangeRateInput';
 import Button from '../../components/Button/Button';
 import EntryForm from '../../components/EntryForm/EntryForm';
 import { useToast } from '../../hooks/useToast';
@@ -22,6 +25,8 @@ interface OutboundFormValues {
 	productId: number;
 	customerId: number;
 	outboundDate: Dayjs;
+	currency: SettlementCurrency;
+	exchangeRate?: number | null;
 	saleUnitPrice: number;
 	createReceivable: boolean;
 	remark?: string;
@@ -67,6 +72,8 @@ function calculateSummary(
 	lines: BatchRowValue[],
 	batches: InboundBatch[],
 	saleUnitPrice: number | null | undefined,
+	currency: SettlementCurrency,
+	exchangeRate: number | null | undefined,
 ) {
 	const activeLines = lines.filter((line) => line.batchId > 0 && line.qty > 0);
 	const totalQty = activeLines.reduce((sum, line) => sum + line.qty, 0);
@@ -76,9 +83,13 @@ function calculateSummary(
 	}, 0);
 	const price = saleUnitPrice ?? 0;
 	const totalSaleAmount = totalQty * price;
-	const grossProfit = totalSaleAmount - weightedCost;
+	const convertedSaleAmount =
+		currency === 'USD' && exchangeRate != null
+			? totalSaleAmount * exchangeRate
+			: totalSaleAmount;
+	const grossProfit = convertedSaleAmount - weightedCost;
 
-	return { totalQty, totalSaleAmount, weightedCost, grossProfit };
+	return { totalQty, totalSaleAmount, convertedSaleAmount, weightedCost, grossProfit };
 }
 
 interface OutboundSummaryProps {
@@ -88,12 +99,13 @@ interface OutboundSummaryProps {
 }
 
 function OutboundSummary({ lines, batches, unit }: OutboundSummaryProps) {
+	const currency = Form.useWatch<SettlementCurrency>('currency') ?? 'CNY';
+	const exchangeRate = Form.useWatch<number | null>('exchangeRate');
 	const saleUnitPrice = Form.useWatch<number | null>('saleUnitPrice');
-	const { totalQty, totalSaleAmount, weightedCost, grossProfit } = calculateSummary(
-		lines,
-		batches,
-		saleUnitPrice,
-	);
+	const { totalQty, totalSaleAmount, convertedSaleAmount, weightedCost, grossProfit } =
+		calculateSummary(lines, batches, saleUnitPrice, currency, exchangeRate);
+
+	const saleAmountPrefix = currency === 'USD' ? '$' : '¥';
 
 	return (
 		<div className={styles.summaryBlock}>
@@ -105,8 +117,18 @@ function OutboundSummary({ lines, batches, unit }: OutboundSummaryProps) {
 			</div>
 			<div className={styles.summaryRow}>
 				<span className={styles.summaryLabel}>总销售额</span>
-				<span className={`${styles.summaryValue} tabular-nums`}>¥ {formatMoney(totalSaleAmount)}</span>
+				<span className={`${styles.summaryValue} tabular-nums`}>
+					{saleAmountPrefix} {formatMoney(totalSaleAmount)}
+				</span>
 			</div>
+			{currency === 'USD' ? (
+				<div className={styles.summaryRow}>
+					<span className={styles.summaryLabel}>折算人民币销售额</span>
+					<span className={`${styles.summaryValue} tabular-nums`}>
+						¥ {formatMoney(convertedSaleAmount)}
+					</span>
+				</div>
+			) : null}
 			<div className={styles.summaryRow}>
 				<span className={styles.summaryLabel}>加权采购成本</span>
 				<span className={`${styles.summaryValue} tabular-nums`}>¥ {formatMoney(weightedCost)}</span>
@@ -129,6 +151,7 @@ export default function OutboundEntryPage() {
 	const navigate = useNavigate();
 	const { showToast } = useToast();
 	const showAlert = useAlertStore((state) => state.showAlert);
+	const [form] = Form.useForm<OutboundFormValues>();
 	const [stockItems, setStockItems] = useState<StockItem[]>([]);
 	const [customers, setCustomers] = useState<Customer[]>([]);
 	const [batches, setBatches] = useState<InboundBatch[]>([]);
@@ -136,6 +159,11 @@ export default function OutboundEntryPage() {
 	const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
 	const [optionsLoading, setOptionsLoading] = useState(true);
 	const [batchesLoading, setBatchesLoading] = useState(false);
+	const [exchangeRateLoading, setExchangeRateLoading] = useState(false);
+	const [exchangeRateFetchFailed, setExchangeRateFetchFailed] = useState(false);
+
+	const currency = Form.useWatch('currency', form) ?? 'CNY';
+	const outboundDate = Form.useWatch('outboundDate', form);
 
 	const selectedStock = stockItems.find((item) => item.productId === selectedProductId);
 	const selectedUnit = selectedStock?.unit ?? batches[0]?.unit ?? '';
@@ -176,6 +204,53 @@ export default function OutboundEntryPage() {
 		loadOptions();
 	}, [showAlert]);
 
+	useEffect(() => {
+		if (currency !== 'USD') {
+			setExchangeRateLoading(false);
+			setExchangeRateFetchFailed(false);
+			return;
+		}
+
+		let cancelled = false;
+
+		const fetchExchangeRate = async () => {
+			setExchangeRateLoading(true);
+			setExchangeRateFetchFailed(false);
+
+			try {
+				const dateStr = outboundDate?.format('YYYY-MM-DD');
+				const result = await getCnyUsdExchangeRate(dateStr);
+
+				if (cancelled) {
+					return;
+				}
+
+				if (result.success && result.rate != null) {
+					form.setFieldValue('exchangeRate', result.rate);
+					setExchangeRateFetchFailed(false);
+				} else {
+					form.setFieldValue('exchangeRate', null);
+					setExchangeRateFetchFailed(true);
+				}
+			} catch {
+				if (!cancelled) {
+					form.setFieldValue('exchangeRate', null);
+					setExchangeRateFetchFailed(true);
+				}
+			} finally {
+				if (!cancelled) {
+					setExchangeRateLoading(false);
+				}
+			}
+		};
+
+		void fetchExchangeRate();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [currency, outboundDate, form]);
+
 	const stockOptions = useMemo(
 		() =>
 			stockItems.map((item) => ({
@@ -208,6 +283,13 @@ export default function OutboundEntryPage() {
 		await loadBatches(productId);
 	};
 
+	const handleCurrencyChange = (nextCurrency: SettlementCurrency) => {
+		if (nextCurrency === 'CNY') {
+			form.setFieldValue('exchangeRate', null);
+			setExchangeRateFetchFailed(false);
+		}
+	};
+
 	const handleBatchLineChange = (index: number, value: BatchRowValue) => {
 		setBatchLines((lines) => lines.map((line, lineIndex) => (lineIndex === index ? value : line)));
 	};
@@ -234,11 +316,21 @@ export default function OutboundEntryPage() {
 			throw new Error('validation');
 		}
 
+		if (formValues.currency === 'USD' && (formValues.exchangeRate == null || formValues.exchangeRate <= 0)) {
+			showAlert('请填写汇率');
+			throw new Error('validation');
+		}
+
 		try {
 			await createOutbound({
 				productId: formValues.productId,
 				customerId: formValues.customerId,
 				outboundDate: formValues.outboundDate.format('YYYY-MM-DD'),
+				currency: formValues.currency,
+				exchangeRate:
+					formValues.currency === 'USD' && formValues.exchangeRate != null
+						? formValues.exchangeRate
+						: undefined,
 				saleUnitPrice: formValues.saleUnitPrice,
 				remark: formValues.remark?.trim() || undefined,
 				createReceivable: formValues.createReceivable,
@@ -258,10 +350,13 @@ export default function OutboundEntryPage() {
 		}
 	};
 
+	const priceAddon = currency === 'USD' ? '$' : '¥';
+
 	return (
 		<EntryForm
 			title="录入出库"
 			submitLabel="提交出库"
+			form={form}
 			loading={optionsLoading || batchesLoading}
 			onCancel={() => navigate('/inventory/stock')}
 			onSubmit={handleSubmit}
@@ -280,6 +375,34 @@ export default function OutboundEntryPage() {
 				/>
 			</Form.Item>
 
+			<Form.Item label="币种" name="currency" initialValue="CNY">
+				<Radio.Group onChange={(event) => handleCurrencyChange(event.target.value)}>
+					<Radio value="CNY">人民币</Radio>
+					<Radio value="USD">美元</Radio>
+				</Radio.Group>
+			</Form.Item>
+
+			{currency === 'USD' ? (
+				<Form.Item
+					label="汇率"
+					name="exchangeRate"
+					rules={[
+						{
+							validator: async (_, value: number | null | undefined) => {
+								if (value == null || value <= 0) {
+									throw new Error('请填写汇率');
+								}
+							},
+						},
+					]}
+				>
+					<ExchangeRateInput
+						loading={exchangeRateLoading}
+						autoFetchFailed={exchangeRateFetchFailed}
+					/>
+				</Form.Item>
+			) : null}
+
 			<div className={styles.fieldRow}>
 				<Form.Item
 					label="销售单价"
@@ -294,7 +417,7 @@ export default function OutboundEntryPage() {
 						precision={2}
 						style={{ width: '100%' }}
 						placeholder="请输入单价"
-						addonBefore="¥"
+						addonBefore={priceAddon}
 					/>
 				</Form.Item>
 

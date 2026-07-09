@@ -104,10 +104,22 @@ export interface OutboundBatchLinePayload {
 	qty: number;
 }
 
+export type SettlementCurrency = 'CNY' | 'USD';
+
+export interface ExchangeRateResult {
+	success: boolean;
+	rate: number | null;
+	date?: string;
+	source?: string;
+	message?: string;
+}
+
 export interface OutboundCreatePayload {
 	productId: number;
 	customerId: number;
 	outboundDate: string;
+	currency?: SettlementCurrency;
+	exchangeRate?: number;
 	saleUnitPrice: number;
 	remark?: string;
 	createReceivable?: boolean;
@@ -117,10 +129,20 @@ export interface OutboundCreatePayload {
 export interface OutboundCreateResult {
 	outboundId: number;
 	totalQty: number;
+	currency: SettlementCurrency;
 	totalSaleAmount: number;
+	convertedSaleAmount: number;
 	weightedCost: number;
 	grossProfit: number;
 	receivableId: number | null;
+}
+
+export async function getCnyUsdExchangeRate(date?: string): Promise<ExchangeRateResult> {
+	const response = await apiClient.get<ExchangeRateResult>('/inventory/exchange-rate/cny-usd', {
+		params: date ? { date } : undefined,
+	});
+
+	return response.data;
 }
 
 export async function listStock(params: {

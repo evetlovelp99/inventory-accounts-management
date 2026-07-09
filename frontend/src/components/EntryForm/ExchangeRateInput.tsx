@@ -2,14 +2,14 @@ import { InputNumber, Spin } from 'antd';
 import styles from './ExchangeRateInput.module.css';
 
 export interface ExchangeRateInputProps {
-	value: number | null;
-	onChange: (rate: number) => void;
+	value?: number | null;
+	onChange?: (rate: number) => void;
 	loading: boolean;
 	autoFetchFailed: boolean;
 }
 
 export default function ExchangeRateInput({
-	value,
+	value = null,
 	onChange,
 	loading,
 	autoFetchFailed,
@@ -26,7 +26,7 @@ export default function ExchangeRateInput({
 					className={styles.input}
 					addonBefore="¥"
 					onChange={(nextValue) => {
-						if (nextValue !== null) {
+						if (nextValue !== null && onChange) {
 							onChange(nextValue);
 						}
 					}}
