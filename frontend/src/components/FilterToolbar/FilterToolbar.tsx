@@ -188,7 +188,7 @@ export default function FilterToolbar({
 						<div className={styles.tagRow}>
 							{activeFilters.map((filter) => (
 								<span key={filter.key} className={styles.tag}>
-									{filter.label}：{filter.value}
+									{filter.label}：{filter.displayValue ?? filter.value}
 									<button
 										type="button"
 										className={styles.tagClose}

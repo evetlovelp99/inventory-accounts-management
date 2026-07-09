@@ -111,8 +111,8 @@ _目标：仓管可完整录入入库、出库，老板可查库存和流水_
 - [x] 2.5 后端：应付账款完全对称实现（2.1–2.4 对应的 payable 版本）
 - [x] 2.6 后端：修改 `POST /api/inventory/inbound`：支持 `createPayable` 参数，入库时自动创建应付账款记录
 - [x] 2.7 后端：修改 `POST /api/inventory/outbound`：支持 `createReceivable` 参数，出库时自动创建应收账款记录（含币种/汇率透传，见 1.31）
-- [ ] 2.8 前端：实现 `ReceivablePage`（顶部应收总额 StatCard + DataTable；账龄着色：<15天 Clay / 15–30天 Clay Dark / >30天 Brick；行操作「登记还款」）
-- [ ] 2.9 前端：实现 `PaymentModal`（弹窗：显示剩余金额，超额行内报错，确认后 Toast 提示）
+- [x] 2.8 前端：实现 `ReceivablePage`（顶部应收总额 StatCard + DataTable；账龄着色：<15天 Clay / 15–30天 Clay Dark / >30天 Brick；行操作「登记还款」）
+- [x] 2.9 前端：实现 `PaymentModal`（弹窗：显示剩余金额，超额行内报错，确认后 Toast 提示）
 - [ ] 2.10 前端：实现 `AccountDetailPage`（单客户/供应商：明细列表 + 还款流水，按时间倒序）
 - [ ] 2.11 前端：实现 `PayablePage`（与 ReceivablePage 对称）
 

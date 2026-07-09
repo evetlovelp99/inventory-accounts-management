@@ -1,0 +1,96 @@
+.card {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	min-height: 108px;
+	padding: 18px 18px 16px;
+	background: var(--color-paper);
+	border: 1px solid var(--color-dust);
+	border-radius: var(--radius-base);
+}
+
+.clickable {
+	cursor: pointer;
+	transition: border-color 0.15s ease;
+}
+
+.clickable:hover,
+.clickable:focus-visible {
+	border-color: var(--color-amber);
+	outline: none;
+}
+
+.warning {
+	border-left: 4px solid var(--color-brick);
+}
+
+.warning .label {
+	color: var(--color-brick);
+}
+
+.success {
+	border-left: 4px solid var(--color-grove);
+}
+
+.label {
+	margin: 0;
+	font-size: var(--font-size-caption);
+	line-height: var(--line-height-caption);
+	color: var(--color-ash);
+	white-space: nowrap;
+}
+
+.value {
+	margin: 8px 0 0;
+	font-family: var(--font-mono);
+	font-size: var(--font-size-display);
+	line-height: var(--line-height-display);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-ink);
+}
+
+.meta {
+	display: flex;
+	gap: 12px;
+	margin: 8px 0 0;
+	font-size: var(--font-size-caption);
+	line-height: var(--line-height-caption);
+	color: var(--color-ash);
+}
+
+.loading {
+	gap: 12px;
+}
+
+.skeletonLabel,
+.skeletonValue {
+	border-radius: var(--radius-tag);
+	background: linear-gradient(
+		90deg,
+		var(--color-dust) 25%,
+		#f0ede8 50%,
+		var(--color-dust) 75%
+	);
+	background-size: 200% 100%;
+	animation: shimmer 1.2s ease-in-out infinite;
+}
+
+.skeletonLabel {
+	width: 96px;
+	height: 12px;
+}
+
+.skeletonValue {
+	width: 180px;
+	height: 32px;
+}
+
+@keyframes shimmer {
+	0% {
+		background-position: 200% 0;
+	}
+
+	100% {
+		background-position: -200% 0;
+	}
+}
