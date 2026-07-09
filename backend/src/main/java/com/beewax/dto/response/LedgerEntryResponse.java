@@ -16,6 +16,7 @@ public class LedgerEntryResponse {
 	private BigDecimal qty;
 	private BigDecimal unitPrice;
 	private BigDecimal amount;
+	private String currency;
 	private String partyName;
 	private String remark;
 	private InboundProductionInfoResponse productionInfo;

@@ -196,6 +196,7 @@ export interface LedgerEntry {
 	qty: number;
 	unitPrice: number;
 	amount: number;
+	currency?: SettlementCurrency;
 	partyName: string;
 	remark: string | null;
 	productionInfo: InboundProductionInfo | null;

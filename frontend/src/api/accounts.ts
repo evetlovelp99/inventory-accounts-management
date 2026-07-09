@@ -1,0 +1,55 @@
+import axios from 'axios';
+import apiClient, { type ApiResponse } from './client';
+import type { SettlementCurrency } from './inventory';
+
+export type ReceivableStatus = 'UNPAID' | 'PARTIAL' | 'PAID';
+
+export interface ReceivableSummaryItem {
+	customerId: number;
+	customerName: string;
+	currency: SettlementCurrency;
+	originalAmount: number;
+	convertedAmount: number;
+	paidAmount: number;
+	remainingAmount: number;
+	oldestUnpaidDate: string;
+	daysSinceOldest: number;
+	status: ReceivableStatus;
+}
+
+export interface ReceivableListResult {
+	totalUnpaidAmount: number;
+	list: ReceivableSummaryItem[];
+	total: number;
+}
+
+export function getAccountsErrorMessage(error: unknown): string {
+	if (axios.isAxiosError(error)) {
+		const message = (error.response?.data as { message?: string } | undefined)?.message;
+		if (message) {
+			return message;
+		}
+	}
+	if (error instanceof Error) {
+		return error.message;
+	}
+	return '加载失败，请稍后重试';
+}
+
+export async function listReceivables(params: {
+	keyword?: string;
+	status?: ReceivableStatus;
+	page?: number;
+	size?: number;
+} = {}): Promise<ReceivableListResult> {
+	const response = await apiClient.get<ApiResponse<ReceivableListResult>>(
+		'/accounts/receivable',
+		{ params },
+	);
+
+	if (response.data.code !== 200) {
+		throw new Error(response.data.message);
+	}
+
+	return response.data.data;
+}

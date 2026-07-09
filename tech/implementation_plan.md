@@ -93,7 +93,7 @@ _目标：仓管可完整录入入库、出库，老板可查库存和流水_
 - [x] 1.32 后端：`GET /api/dashboard/summary` 与 `GET /api/accounts/receivable` 聚合查询切换到 `converted_*` 字段求和（本次仅完成 receivable 部分；dashboard/summary 留待 3.1）
 - [x] 1.33 前端：实现 `ExchangeRateInput` 组件（loading / 自动获取失败提示 / 正常可编辑三态）
 - [x] 1.34 前端：`OutboundEntryPage` 接入币种单选 + 条件渲染汇率框 + 提交前校验（USD 必填汇率）
-- [ ] 1.35 前端：实现 `formatCurrencyAmount` 工具函数；`StockOverviewPage` / `ProductLedgerPage` 出库列表、`ReceivablePage` 应收列表按原始币种展示金额（¥ / $ 前缀）
+- [x] 1.35 前端：实现 `formatCurrencyAmount` 工具函数；`StockOverviewPage` / `ProductLedgerPage` 出库列表、`ReceivablePage` 应收列表按原始币种展示金额（¥ / $ 前缀）
 - [x] 1.36 联调测试：美元出库全链路（录入 → 应收生成 → Dashboard/应收汇总口径正确）；汇率接口失败场景确认不阻塞保存；人民币出库场景回归测试（后端单元测试覆盖折算与应收创建逻辑；dashboard 汇总留待 3.1）
 
 **范围外（不在本阶段做，已记录于 multi-currency-outbound.md「Later」）**：其他币种支持、汇率历史查询、对接客户实际结汇价、汇兑损益单独科目核算（含 `payment_logs` 按币种记录还款）、入库/采购环节多币种支持。

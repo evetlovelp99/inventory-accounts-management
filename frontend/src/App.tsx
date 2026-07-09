@@ -10,6 +10,7 @@ import LoginPage from './pages/Login/LoginPage';
 import CustomersPage from './pages/Settings/CustomersPage';
 import ProductsPage from './pages/Settings/ProductsPage';
 import SuppliersPage from './pages/Settings/SuppliersPage';
+import ReceivablePage from './pages/Accounts/ReceivablePage';
 import ProtectedRoute from './routes/ProtectedRoute';
 
 function PlaceholderPage({ title }: { title: string }) {
@@ -34,6 +35,7 @@ const IMPLEMENTED_PATHS = new Set([
 	'/inventory/inbound',
 	'/inventory/outbound',
 	'/inventory/stock',
+	'/accounts/receivable',
 ]);
 
 export default function App() {
@@ -54,6 +56,7 @@ export default function App() {
 							path="/inventory/stock/:productId"
 							element={<ProductLedgerPage />}
 						/>
+						<Route path="/accounts/receivable" element={<ReceivablePage />} />
 						{NAV_ITEMS.filter((item) => !IMPLEMENTED_PATHS.has(item.path)).map((item) => (
 							<Route
 								key={item.path}

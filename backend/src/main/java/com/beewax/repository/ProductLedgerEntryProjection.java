@@ -17,6 +17,8 @@ public interface ProductLedgerEntryProjection {
 
 	BigDecimal getAmount();
 
+	String getCurrency();
+
 	String getPartyName();
 
 	String getRemark();

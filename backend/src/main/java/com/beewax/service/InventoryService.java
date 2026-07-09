@@ -196,6 +196,7 @@ public class InventoryService {
 						row.getQty(),
 						row.getUnitPrice(),
 						row.getAmount(),
+						row.getCurrency(),
 						row.getPartyName(),
 						row.getRemark(),
 						buildProductionInfo(row)))

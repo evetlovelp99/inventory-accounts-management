@@ -16,6 +16,10 @@ import type { ActiveFilter, DateRangeValue } from '../../components/FilterToolba
 import StatusBadge from '../../components/StatusBadge/StatusBadge';
 import type { StatusBadgeStatus } from '../../components/StatusBadge/StatusBadge';
 import { useAlertStore } from '../../store/alertStore';
+import {
+	formatCurrencyAmount,
+	getLedgerEntryCurrency,
+} from '../../utils/formatCurrencyAmount';
 import styles from './ProductLedgerPage.module.css';
 
 const PAGE_SIZE = 20;
@@ -30,11 +34,12 @@ function formatFullDate(dateStr: string): string {
 	return dateStr;
 }
 
-function formatMoney(amount: number): string {
-	return amount.toLocaleString('zh-CN', {
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2,
-	});
+function formatLedgerMoney(
+	amount: number,
+	type: LedgerEntryType,
+	currency?: LedgerEntry['currency'],
+): string {
+	return formatCurrencyAmount(amount, getLedgerEntryCurrency(type, currency));
 }
 
 function formatQty(qty: number, unit: string): string {
@@ -267,7 +272,7 @@ export default function ProductLedgerPage() {
 			key: 'unitPrice',
 			width: 120,
 			align: 'right',
-			render: (price: number) => `¥ ${formatMoney(price)}`,
+			render: (price: number, row) => formatLedgerMoney(price, row.type, row.currency),
 		},
 		{
 			title: '金额',
@@ -275,8 +280,10 @@ export default function ProductLedgerPage() {
 			key: 'amount',
 			width: 120,
 			align: 'right',
-			render: (amount: number) => (
-				<span className={styles.amountValue}>¥ {formatMoney(amount)}</span>
+			render: (amount: number, row) => (
+				<span className={styles.amountValue}>
+					{formatLedgerMoney(amount, row.type, row.currency)}
+				</span>
 			),
 		},
 		{
