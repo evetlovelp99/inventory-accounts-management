@@ -11,6 +11,7 @@ import CustomersPage from './pages/Settings/CustomersPage';
 import ProductsPage from './pages/Settings/ProductsPage';
 import SuppliersPage from './pages/Settings/SuppliersPage';
 import ReceivablePage from './pages/Accounts/ReceivablePage';
+import AccountDetailPage from './pages/Accounts/AccountDetailPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 
 function PlaceholderPage({ title }: { title: string }) {
@@ -57,6 +58,7 @@ export default function App() {
 							element={<ProductLedgerPage />}
 						/>
 						<Route path="/accounts/receivable" element={<ReceivablePage />} />
+						<Route path="/accounts/:type/:partyId" element={<AccountDetailPage />} />
 						{NAV_ITEMS.filter((item) => !IMPLEMENTED_PATHS.has(item.path)).map((item) => (
 							<Route
 								key={item.path}

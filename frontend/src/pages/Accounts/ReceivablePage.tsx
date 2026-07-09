@@ -1,5 +1,6 @@
 import type { ColumnsType } from 'antd/es/table';
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
 	getAccountsErrorMessage,
 	getReceivableDetail,
@@ -15,7 +16,6 @@ import FilterToolbar from '../../components/FilterToolbar/FilterToolbar';
 import type { ActiveFilter, DateRangeValue } from '../../components/FilterToolbar/filterTypes';
 import StatCard from '../../components/StatCard/StatCard';
 import StatusBadge from '../../components/StatusBadge/StatusBadge';
-import type { StatusBadgeStatus } from '../../components/StatusBadge/StatusBadge';
 import { useAlertStore } from '../../store/alertStore';
 import { formatCurrencyAmount, formatMoney } from '../../utils/formatCurrencyAmount';
 import {
@@ -23,6 +23,7 @@ import {
 	getReceivableAgingTone,
 	type ReceivableAgingTone,
 } from '../../utils/receivableAging';
+import { formatAccountStatus } from './accountStatus';
 import PaymentModal from './PaymentModal';
 import styles from './ReceivablePage.module.css';
 
@@ -34,17 +35,6 @@ const STATUS_FILTER_OPTIONS = [
 	{ value: 'PARTIAL', label: '部分还款' },
 	{ value: 'PAID', label: '已结清' },
 ] as const;
-
-function formatReceivableStatus(status: ReceivableStatus): StatusBadgeStatus {
-	switch (status) {
-		case 'UNPAID':
-			return '未结清';
-		case 'PARTIAL':
-			return '部分还款';
-		case 'PAID':
-			return '已结清';
-	}
-}
 
 function formatSummaryDate(dateStr: string): string {
 	const [, month, day] = dateStr.split('-');
@@ -74,6 +64,7 @@ interface PaymentTarget {
 }
 
 export default function ReceivablePage() {
+	const navigate = useNavigate();
 	const showAlert = useAlertStore((state) => state.showAlert);
 	const [items, setItems] = useState<ReceivableSummaryItem[]>([]);
 	const [totalUnpaidAmount, setTotalUnpaidAmount] = useState(0);
@@ -229,7 +220,7 @@ export default function ReceivablePage() {
 			key: 'status',
 			width: 100,
 			render: (status: ReceivableStatus) => (
-				<StatusBadge status={formatReceivableStatus(status)} />
+				<StatusBadge status={formatAccountStatus(status)} />
 			),
 		},
 		{
@@ -293,6 +284,11 @@ export default function ReceivablePage() {
 				dataSource={items}
 				loading={loading}
 				rowKey="customerId"
+				onRowClick={(row) =>
+					navigate(`/accounts/receivable/${row.customerId}`, {
+						state: { partyName: row.customerName, currency: row.currency },
+					})
+				}
 				emptyText={keyword ? '未找到匹配客户' : '暂无未结清应收账款'}
 				pagination={{
 					current: page,

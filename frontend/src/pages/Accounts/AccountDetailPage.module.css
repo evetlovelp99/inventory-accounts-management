@@ -1,0 +1,105 @@
+.header {
+	margin-bottom: var(--space-4);
+}
+
+.headerRow {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--space-4);
+}
+
+.headerMain {
+	flex: 1;
+	min-width: 0;
+}
+
+.partyName {
+	margin: 0;
+	font-size: var(--font-size-title-1);
+	line-height: var(--line-height-title-1);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-ink);
+}
+
+.partyMeta {
+	margin: var(--space-1) 0 0;
+	font-size: var(--font-size-caption);
+	line-height: var(--line-height-caption);
+	color: var(--color-ash);
+}
+
+.toolbarWrap {
+	margin-bottom: var(--space-4);
+}
+
+.amountValue {
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums lining-nums;
+}
+
+.actions {
+	display: inline-flex;
+	align-items: center;
+}
+
+.paymentDetail {
+	padding: 12px 8px 4px;
+}
+
+.paymentTitle {
+	margin: 0 0 12px;
+	font-size: var(--font-size-label);
+	line-height: var(--line-height-label);
+	font-weight: var(--font-weight-medium);
+	color: var(--color-ink);
+}
+
+.paymentEmpty {
+	margin: 0;
+	font-size: var(--font-size-caption);
+	line-height: var(--line-height-caption);
+	color: var(--color-ash);
+}
+
+.paymentList {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.paymentItem {
+	display: grid;
+	grid-template-columns: 120px 1fr auto;
+	gap: 12px;
+	align-items: center;
+	padding: 10px 0;
+	border-top: 1px solid var(--color-dust);
+}
+
+.paymentItem:first-child {
+	border-top: none;
+	padding-top: 0;
+}
+
+.paymentDate {
+	font-size: var(--font-size-body);
+	line-height: var(--line-height-body);
+	color: var(--color-ink);
+}
+
+.paymentAmount {
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums lining-nums;
+	font-size: var(--font-size-body);
+	line-height: var(--line-height-body);
+	color: var(--color-ink);
+	text-align: right;
+}
+
+.paymentRemark {
+	font-size: var(--font-size-caption);
+	line-height: var(--line-height-caption);
+	color: var(--color-ash);
+	text-align: right;
+}

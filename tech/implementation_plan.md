@@ -113,7 +113,7 @@ _目标：仓管可完整录入入库、出库，老板可查库存和流水_
 - [x] 2.7 后端：修改 `POST /api/inventory/outbound`：支持 `createReceivable` 参数，出库时自动创建应收账款记录（含币种/汇率透传，见 1.31）
 - [x] 2.8 前端：实现 `ReceivablePage`（顶部应收总额 StatCard + DataTable；账龄着色：<15天 Clay / 15–30天 Clay Dark / >30天 Brick；行操作「登记还款」）
 - [x] 2.9 前端：实现 `PaymentModal`（弹窗：显示剩余金额，超额行内报错，确认后 Toast 提示）
-- [ ] 2.10 前端：实现 `AccountDetailPage`（单客户/供应商：明细列表 + 还款流水，按时间倒序）
+- [x] 2.10 前端：实现 `AccountDetailPage`（单客户/供应商：明细列表 + 还款流水，按时间倒序）
 - [ ] 2.11 前端：实现 `PayablePage`（与 ReceivablePage 对称）
 
 **✅ 阶段 2 验收**：录入一笔出库时勾选"货款未收" → 应收账款列表出现该条记录 → 登记部分还款 → 剩余金额正确更新 → 全额还清后状态变"已结清"。

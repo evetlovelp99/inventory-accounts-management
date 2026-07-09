@@ -58,6 +58,25 @@ export interface ReceivablePaymentResult {
 	status: ReceivableStatus;
 }
 
+export type PayableStatus = ReceivableStatus;
+
+export interface PayableRecord {
+	id: number;
+	originalAmount: number;
+	paidAmount: number;
+	remainingAmount: number;
+	occurDate: string;
+	status: PayableStatus;
+	inboundId: number | null;
+	remark: string | null;
+	paymentLogs: PaymentLogItem[];
+}
+
+export interface PayableDetailResult {
+	supplierName: string;
+	records: PayableRecord[];
+}
+
 export function getAccountsErrorMessage(error: unknown): string {
 	if (axios.isAxiosError(error)) {
 		const message = (error.response?.data as { message?: string } | undefined)?.message;
@@ -112,6 +131,22 @@ export async function registerReceivablePayment(
 	const response = await apiClient.post<ApiResponse<ReceivablePaymentResult>>(
 		`/accounts/receivable/${id}/payment`,
 		payload,
+	);
+
+	if (response.data.code !== 200) {
+		throw new Error(response.data.message);
+	}
+
+	return response.data.data;
+}
+
+export async function getPayableDetail(
+	supplierId: number,
+	params: { startDate?: string; endDate?: string } = {},
+): Promise<PayableDetailResult> {
+	const response = await apiClient.get<ApiResponse<PayableDetailResult>>(
+		'/accounts/payable/detail',
+		{ params: { supplierId, ...params } },
 	);
 
 	if (response.data.code !== 200) {
