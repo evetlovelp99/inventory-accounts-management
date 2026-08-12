@@ -1,0 +1,29 @@
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+*.sw?
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Logs
+*.log
+logs/
+
+# Backend local uploads (also ignored under backend/)
+uploads/
+.cursor/
